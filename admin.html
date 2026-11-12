@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GLORY X BD - Admin Panel</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="https://files.catbox.moe/h4zlba.ico">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563EB;
+            --primary-hover: #1D4ED8;
+            --secondary: #EAB308;
+            --dark: #111827;
+            --bg: #F4F6FA;
+            --card: #FFFFFF;
+            --success: #16A34A;
+            --danger: #DC2626;
+            --muted: #64748B;
+            --border: #E2E8F0;
+            --sidebar-width: 260px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--dark); overflow-x: hidden; }
+        
+        /* Sidebar */
+        .sidebar { position: fixed; top: 0; left: calc(var(--sidebar-width) * -1); width: var(--sidebar-width); height: 100vh; background: var(--dark); color: #fff; z-index: 1000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; overflow-y: auto; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+        .sidebar.open { left: 0; }
+        .sidebar-brand { padding: 24px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); background: #0f172a; }
+        .sidebar-brand img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #fff; padding: 2px; }
+        .sidebar-brand h2 { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: var(--secondary); letter-spacing: 0.5px; }
+        
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: #9CA3AF; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: all 0.2s; text-decoration: none; border-left: 4px solid transparent; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.08); color: #fff; border-left-color: var(--secondary); }
+        .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+        .nav-category { padding: 24px 20px 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #4B5563; }
+
+        /* Sidebar Overlay */
+        #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 999; display: none; transition: 0.3s; }
+
+        /* Main Content */
+        .main-content { margin-left: 0; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-height: 100vh; display: flex; flex-direction: column; }
+        .top-header { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .mobile-toggle { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: #F1F5F9; border: none; font-size: 18px; color: var(--dark); cursor: pointer; transition: 0.2s; }
+        .mobile-toggle:hover { background: #E2E8F0; }
+        .page-title { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; color: var(--dark); }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .admin-badge { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
+
+        .content-area { padding: 24px; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; }
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards & UI */
+        .card { background: var(--card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03); margin-bottom: 24px; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .kpi-card { background: #fff; border-radius: 16px; padding: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; position: relative; overflow: hidden; transition: 0.3s; }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1); }
+        .kpi-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; flex-shrink: 0; }
+        .kpi-info h3 { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .kpi-info p { font-size: 26px; font-weight: 800; font-family: 'Sora', sans-serif; color: var(--dark); line-height: 1; }
+
+        /* Dashboard Chart */
+        .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 150px; padding-top: 20px; gap: 10px; }
+        .chart-bar { flex: 1; background: #E2E8F0; border-radius: 6px 6px 0 0; position: relative; transition: 0.3s; display: flex; justify-content: center; }
+        .chart-bar:hover { background: var(--primary); }
+        .chart-bar span { position: absolute; bottom: -24px; font-size: 10px; font-weight: 700; color: var(--muted); }
+        .chart-bar-fill { width: 100%; background: linear-gradient(180deg, var(--primary), #60A5FA); border-radius: 6px 6px 0 0; position: absolute; bottom: 0; }
+
+        /* Tables & Lists */
+        .table-responsive { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; background: #fff; }
+        th { padding: 16px; background: #F8FAFC; color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #F8FAFC; }
+        
+        /* Buttons */
+        .btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-primary:hover { background: var(--primary-hover); box-shadow: 0 6px 16px rgba(37,99,235,0.4); }
+        .btn-warning { background: var(--secondary); color: var(--dark); }
+        .btn-warning:hover { background: #CA8A04; color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+        .btn-danger:hover { background: #B91C1C; }
+        .btn-success { background: var(--success); color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,0.3); }
+        .btn-success:hover { background: #15803D; }
+        .btn-outline { background: #fff; border: 1px solid var(--border); color: var(--dark); }
+        .btn-outline:hover { background: #F8FAFC; border-color: #CBD5E1; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+        .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 500; outline: none; transition: all 0.2s; background: #F8FAFC; }
+        .form-control:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+        
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: #fff; border-radius: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; animation: modalUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        @keyframes modalUp { from { transform: translateY(30px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-radius: 20px 20px 0 0; }
+        .modal-title { font-size: 18px; font-weight: 800; font-family: 'Sora', sans-serif; }
+        .modal-close { background: #E2E8F0; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: 0.2s; }
+        .modal-close:hover { background: #FEE2E2; color: var(--danger); transform: rotate(90deg); }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 20px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #F8FAFC; border-radius: 0 0 20px 20px; }
+
+        /* Badges */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: 0.3px; }
+        .badge-pending { background: #FEF3C7; color: #92400E; }
+        .badge-success { background: #D1FAE5; color: #065F46; }
+        .badge-danger { background: #FEE2E2; color: #991B1B; }
+        .badge-info { background: #DBEAFE; color: #1E40AF; }
+
+        /* Login Page */
+        .login-page { position: fixed; inset: 0; background: linear-gradient(135deg, var(--dark) 0%, #1E293B 100%); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
+        .login-card { background: #fff; border-radius: 24px; padding: 40px 32px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; overflow: hidden; }
+        .login-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+        .login-logo { width: 80px; height: 80px; border-radius: 20px; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); object-fit: contain; background: #F8FAFC; padding: 10px; }
+        .login-title { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 8px; color: var(--dark); letter-spacing: -0.5px; }
+        .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; font-weight: 600; }
+        .login-input-wrap { position: relative; margin-bottom: 20px; }
+        .login-input-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+        .login-input-wrap input { width: 100%; padding: 16px 16px 16px 48px; border-radius: 12px; border: 1.5px solid var(--border); background: #F8FAFC; font-weight: 600; font-family: inherit; outline: none; transition: 0.2s; }
+        .login-input-wrap input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+        .login-btn { width: 100%; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; font-weight: 800; font-size: 15px; border: none; cursor: pointer; margin-top: 10px; box-shadow: 0 10px 20px -10px rgba(37,99,235,0.8); transition: 0.3s; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 25px -10px rgba(37,99,235,0.9); }
+
+        /* Chat UI */
+        .chat-container { display: flex; height: 650px; background: #fff; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .chat-list { width: 320px; border-right: 1px solid var(--border); overflow-y: auto; background: #F8FAFC; }
+        .chat-list-item { padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .chat-list-item:hover, .chat-list-item.active { background: #fff; border-left: 4px solid var(--primary); }
+        .chat-window { flex: 1; display: flex; flex-direction: column; background: #fff; }
+        .chat-header { padding: 20px; border-bottom: 1px solid var(--border); font-weight: 800; background: #F8FAFC; font-family: 'Sora', sans-serif; }
+        .chat-messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #F4F6FA; }
+        .msg { max-width: 70%; padding: 12px 16px; border-radius: 16px; font-size: 13.5px; font-weight: 500; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .msg.user { background: #fff; align-self: flex-start; border-bottom-left-radius: 4px; color: var(--dark); }
+        .msg.admin { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-input-area { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 12px; background: #fff; }
+        
+        /* Responsive */
+        @media (min-width: 1024px) {
+            .sidebar { left: 0; }
+            .main-content { margin-left: var(--sidebar-width); }
+            .mobile-toggle { display: none; }
+            #sidebar-overlay { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            .chat-container { flex-direction: column; height: auto; }
+            .chat-list { width: 100%; max-height: 250px; border-right: none; border-bottom: 1px solid var(--border); }
+            .chat-window { height: 450px; }
+            .content-area { padding: 16px; }
+            .top-header { padding: 12px 16px; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .table-responsive table { font-size: 13px; }
+            td, th { padding: 12px; }
+            .modal-content { max-height: 95vh; }
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR OVERLAY (Fix for clicking outside to close) -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- LOGIN SECTION -->
+    <div id="loginSec" class="login-page">
+        <div class="login-card">
+            <img src="https://files.catbox.moe/h4zlba.ico" alt="GLORY X BD" class="login-logo" id="loginLogo">
+            <h1 class="login-title">GLORY X BD</h1>
+            <p class="login-sub">Secure Admin Access</p>
+            <form onsubmit="event.preventDefault(); adminLogin();">
+                <div class="login-input-wrap">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="adminEmail" placeholder="Admin Email" required>
+                </div>
+                <div class="login-input-wrap">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="adminPass" placeholder="Password" required>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN APP -->
+    <div id="adminApp" class="hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <img src="https://files.catbox.moe/h4zlba.ico" id="sidebarLogo" alt="Logo">
+                <h2>GLORY X BD</h2>
+            </div>
+            <div class="sidebar-nav">
+                <div class="nav-category">Main</div>
+                <a class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
+                <a class="nav-item" onclick="showView('orders')" id="nav-orders"><i class="fas fa-shopping-bag"></i> Orders</a>
+                <a class="nav-item" onclick="showView('addmoney')" id="nav-addmoney"><i class="fas fa-wallet"></i> Add Money</a>
+                <a class="nav-item" onclick="showView('users')" id="nav-users"><i class="fas fa-users"></i> Users</a>
+                
+                <div class="nav-category">Content</div>
+                <a class="nav-item" onclick="showView('packages')" id="nav-packages"><i class="fas fa-box"></i> Packages</a>
+                <a class="nav-item" onclick="showView('servers')" id="nav-servers"><i class="fas fa-server"></i> Servers</a>
+                <a class="nav-item" onclick="showView('banners')" id="nav-banners"><i class="fas fa-images"></i> Banners</a>
+                <a class="nav-item" onclick="showView('tutorials')" id="nav-tutorials"><i class="fas fa-book-open"></i> Tutorials</a>
+                
+                <div class="nav-category">Communication</div>
+                <a class="nav-item" onclick="showView('chat')" id="nav-chat"><i class="fas fa-comments"></i> Live Chat</a>
+                <a class="nav-item" onclick="showView('notifications')" id="nav-notifications"><i class="fas fa-bell"></i> Notifications</a>
+                
+                <div class="nav-category">Settings</div>
+                <a class="nav-item" onclick="showView('paymentSettings')" id="nav-paymentSettings"><i class="fas fa-credit-card"></i> Payment Settings</a>
+                <a class="nav-item" onclick="showView('contentSettings')" id="nav-contentSettings"><i class="fas fa-cog"></i> Website Content</a>
+                <a class="nav-item" onclick="showView('popupSettings')" id="nav-popupSettings"><i class="fas fa-window-restore"></i> Popup & Social</a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- TOP HEADER -->
+            <header class="top-header">
+                <div class="flex items-center gap-4">
+                    <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</div>
+                    <button class="btn btn-outline" onclick="adminLogout()" style="padding: 8px 12px; border-radius: 8px"><i class="fas fa-power-off text-red-500"></i></button>
+                </div>
+            </header>
+
+            <div class="content-area">
+
+                <!-- DASHBOARD VIEW -->
+                <div id="view-dashboard" class="view-section active">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon" style="background: linear-gradient(135deg, #2563EB, #1D4ED8);"><i class="fas fa-users"></i></div>
+                            <div class="kpi-info"><h3>Total Users</h3><p id="kpi-users">0</p></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon" style="background: linear-gradient(135deg, #EAB308, #CA8A04);"><i class="fas fa-shopping-bag"></i></div>
+                            <div class="kpi-info"><h3>Total Orders</h3><p id="kpi-orders">0</p></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon" style="background: linear-gradient(135deg, #16A34A, #15803D);"><i class="fas fa-money-bill-wave"></i></div>
+                            <div class="kpi-info"><h3>Total Revenue</h3><p id="kpi-revenue">৳0</p></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon" style="background: linear-gradient(135deg, #DC2626, #B91C1C);"><i class="fas fa-clock"></i></div>
+                            <div class="kpi-info"><h3>Pending Orders</h3><p id="kpi-pending">0</p></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Chart Widget -->
+                        <div class="card lg:col-span-2">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-lg font-bold text-dark">Revenue Analytics (Mock)</h2>
+                                <span class="badge badge-success">+12% this week</span>
+                            </div>
+                            <div class="chart-container">
+                                <div class="chart-bar" style="height: 40%"><div class="chart-bar-fill" style="height: 100%"></div><span>Mon</span></div>
+                                <div class="chart-bar" style="height: 60%"><div class="chart-bar-fill" style="height: 100%"></div><span>Tue</span></div>
+                                <div class="chart-bar" style="height: 35%"><div class="chart-bar-fill" style="height: 100%"></div><span>Wed</span></div>
+                                <div class="chart-bar" style="height: 80%"><div class="chart-bar-fill" style="height: 100%"></div><span>Thu</span></div>
+                                <div class="chart-bar" style="height: 55%"><div class="chart-bar-fill" style="height: 100%"></div><span>Fri</span></div>
+                                <div class="chart-bar" style="height: 95%"><div class="chart-bar-fill" style="height: 100%; background: linear-gradient(180deg, #EAB308, #FDE047)"></div><span>Sat</span></div>
+                                <div class="chart-bar" style="height: 75%"><div class="chart-bar-fill" style="height: 100%"></div><span>Sun</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Info -->
+                        <div class="card">
+                            <h2 class="text-lg font-bold mb-4">System Status</h2>
+                            <div class="flex flex-col gap-3">
+                                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                                    <span class="text-sm font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i> Database</span>
+                                    <span class="text-xs font-bold text-green-600">Connected</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                                    <span class="text-sm font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i> Auth Service</span>
+                                    <span class="text-xs font-bold text-green-600">Online</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <span class="text-sm font-bold text-blue-800"><i class="fas fa-info-circle mr-2"></i> Version</span>
+                                    <span class="text-xs font-bold text-blue-600">v2.0.1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="card">
+                            <h2 class="text-lg font-bold mb-4">Recent Orders</h2>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Customer</th><th>Package</th><th>Amount</th><th>Status</th></tr></thead>
+                                    <tbody id="recent-orders-table">
+                                        <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h2 class="text-lg font-bold mb-4">Recent Add Money</h2>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+                                    <tbody id="recent-addmoney-table">
+                                        <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ORDERS VIEW -->
+                <div id="view-orders" class="view-section">
+                    <div class="card">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <input type="text" id="orderSearch" class="form-control" placeholder="Search Order ID, Email, UID..." style="max-width: 350px" onkeyup="filterOrders()">
+                            <select class="form-control" id="orderStatusFilter" style="max-width: 200px" onchange="filterOrders()">
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="verification">Payment Verification</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr><th>Order ID</th><th>Customer</th><th>Package</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody id="orders-table-body">
+                                    <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADD MONEY VIEW -->
+                <div id="view-addmoney" class="view-section">
+                    <div class="card">
+                        <h2 class="text-lg font-bold mb-6">Add Money Requests</h2>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr><th>Req ID</th><th>User</th><th>Amount</th><th>Method</th><th>TrxID</th><th>Status</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody id="addmoney-table-body">
+                                    <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USERS VIEW -->
+                <div id="view-users" class="view-section">
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold">User Management</h2>
+                            <input type="text" id="userSearch" class="form-control" placeholder="Search users..." style="max-width: 300px" onkeyup="filterUsers()">
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Email</th><th>UID</th><th>Balance</th><th>Orders</th><th>Status</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PACKAGES VIEW -->
+                <div id="view-packages" class="view-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Glory Packages</h2>
+                        <button class="btn btn-primary" onclick="openPackageModal()"><i class="fas fa-plus"></i> Add Package</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="packages-grid">
+                        <!-- Packages loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- SERVERS VIEW -->
+                <div id="view-servers" class="view-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Free Fire Servers</h2>
+                        <button class="btn btn-primary" onclick="openServerModal()"><i class="fas fa-plus"></i> Add Server</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="servers-grid">
+                        <!-- Servers loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- BANNERS VIEW -->
+                <div id="view-banners" class="view-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Banner Slider</h2>
+                        <button class="btn btn-primary" onclick="openBannerModal()"><i class="fas fa-plus"></i> Add Banner</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="banners-grid">
+                        <!-- Banners loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- TUTORIALS VIEW -->
+                <div id="view-tutorials" class="view-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Tutorials</h2>
+                        <button class="btn btn-primary" onclick="openTutorialModal()"><i class="fas fa-plus"></i> Add Tutorial</button>
+                    </div>
+                    <div class="card mb-6 bg-blue-50 border-blue-200">
+                        <h3 class="font-bold text-blue-800 mb-4"><i class="fas fa-video"></i> Featured Video Tutorial</h3>
+                        <div id="video-tutorial-container">No video tutorial added yet.</div>
+                    </div>
+                    <h3 class="font-bold text-lg mb-4">Image Tutorials</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="image-tutorials-grid">
+                        <!-- Image tutorials loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- CHAT VIEW -->
+                <div id="view-chat" class="view-section">
+                    <div class="chat-container">
+                        <div class="chat-list" id="chat-list-container">
+                            <!-- Chat list items -->
+                        </div>
+                        <div class="chat-window">
+                            <div class="chat-header" id="chat-header">Select a conversation</div>
+                            <div class="chat-messages" id="chat-messages-container">
+                                <!-- Messages -->
+                            </div>
+                            <div class="chat-input-area" id="chat-input-area" style="display:none;">
+                                <input type="text" id="adminChatInput" class="form-control" placeholder="Type a message...">
+                                <button class="btn btn-primary" onclick="sendAdminChat()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTIFICATIONS VIEW -->
+                <div id="view-notifications" class="view-section">
+                    <div class="card">
+                        <h2 class="text-xl font-bold mb-6">Send Push Notification</h2>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="notifTitle" class="form-control" placeholder="Notification Title">
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="notifBody" class="form-control" placeholder="Write your message here..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Recipient</label>
+                            <select id="notifRecipient" class="form-control">
+                                <option value="all">All Users</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="sendNotification()"><i class="fas fa-paper-plane"></i> Send Notification</button>
+                    </div>
+                </div>
+
+                <!-- PAYMENT SETTINGS VIEW -->
+                <div id="view-paymentSettings" class="view-section">
+                    <h2 class="text-xl font-bold mb-6">Payment Methods</h2>
+                    <div class="card">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <button class="btn btn-primary" onclick="switchPayTab('bkash')" id="tab-bkash">bKash</button>
+                            <button class="btn btn-outline" onclick="switchPayTab('nagad')" id="tab-nagad">Nagad</button>
+                            <button class="btn btn-outline" onclick="switchPayTab('rocket')" id="tab-rocket">Rocket</button>
+                        </div>
+                        
+                        <!-- bKash Config -->
+                        <div id="pay-config-bkash" class="pay-config">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group"><label>bKash Number</label><input type="text" id="set-bkash-num" class="form-control" placeholder="01XXXXXXXXX"></div>
+                                <div class="form-group"><label>Logo URL</label><input type="text" id="set-bkash-logo" class="form-control"></div>
+                                <div class="form-group"><label>Min Amount (৳)</label><input type="number" id="set-bkash-min" class="form-control" value="10"></div>
+                                <div class="form-group"><label>Max Amount (৳)</label><input type="number" id="set-bkash-max" class="form-control" value="50000"></div>
+                            </div>
+                            <div class="form-group"><label>Instructions</label><textarea id="set-bkash-inst" class="form-control" placeholder="1. Send Money to the number..."></textarea></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group"><label>Instruction Image 1 URL</label><input type="text" id="set-bkash-img1" class="form-control"></div>
+                                <div class="form-group"><label>Instruction Image 2 URL</label><input type="text" id="set-bkash-img2" class="form-control"></div>
+                            </div>
+                        </div>
+
+                        <!-- Nagad Config -->
+                        <div id="pay-config-nagad" class="pay-config hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group"><label>Nagad Number</label><input type="text" id="set-nagad-num" class="form-control" placeholder="01XXXXXXXXX"></div>
+                                <div class="form-group"><label>Logo URL</label><input type="text" id="set-nagad-logo" class="form-control"></div>
+                                <div class="form-group"><label>Min Amount (৳)</label><input type="number" id="set-nagad-min" class="form-control" value="10"></div>
+                                <div class="form-group"><label>Max Amount (৳)</label><input type="number" id="set-nagad-max" class="form-control" value="50000"></div>
+                            </div>
+                            <div class="form-group"><label>Instructions</label><textarea id="set-nagad-inst" class="form-control"></textarea></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group"><label>Instruction Image 1 URL</label><input type="text" id="set-nagad-img1" class="form-control"></div>
+                                <div class="form-group"><label>Instruction Image 2 URL</label><input type="text" id="set-nagad-img2" class="form-control"></div>
+                            </div>
+                        </div>
+
+                        <!-- Rocket Config -->
+                        <div id="pay-config-rocket" class="pay-config hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group"><label>Rocket Number</label><input type="text" id="set-rocket-num" class="form-control" placeholder="01XXXXXXXXX"></div>
+                                <div class="form-group"><label>Logo URL</label><input type="text" id="set-rocket-logo" class="form-control"></div>
+                                <div class="form-group"><label>Min Amount (৳)</label><input type="number" id="set-rocket-min" class="form-control" value="10"></div>
+                                <div class="form-group"><label>Max Amount (৳)</label><input type="number" id="set-rocket-max" class="form-control" value="50000"></div>
+                            </div>
+                            <div class="form-group"><label>Instructions</label><textarea id="set-rocket-inst" class="form-control"></textarea></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group"><label>Instruction Image 1 URL</label><input type="text" id="set-rocket-img1" class="form-control"></div>
+                                <div class="form-group"><label>Instruction Image 2 URL</label><input type="text" id="set-rocket-img2" class="form-control"></div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-success mt-6" onclick="savePaymentSettings()"><i class="fas fa-save"></i> Save Payment Settings</button>
+                    </div>
+                </div>
+
+                <!-- CONTENT SETTINGS VIEW -->
+                <div id="view-contentSettings" class="view-section">
+                    <h2 class="text-xl font-bold mb-6">Website Content & Branding</h2>
+                    <div class="card">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group"><label>Website Name</label><input type="text" id="set-site-name" class="form-control" value="GLORY X BD"></div>
+                            <div class="form-group"><label>Logo URL</label><input type="text" id="set-logo-url" class="form-control" value="https://files.catbox.moe/h4zlba.ico"></div>
+                            <div class="form-group"><label>Favicon URL</label><input type="text" id="set-favicon-url" class="form-control" value="https://files.catbox.moe/h4zlba.ico"></div>
+                            <div class="form-group"><label>Hero Title</label><input type="text" id="set-hero-title" class="form-control"></div>
+                        </div>
+                        <div class="form-group"><label>Hero Description</label><textarea id="set-hero-desc" class="form-control"></textarea></div>
+                        
+                        <div class="mt-8 mb-6 border-t pt-6"><h3 class="font-bold text-lg">Contact Info & Policies</h3></div>
+                        <div class="form-group"><label>Contact Info</label><textarea id="set-contact" class="form-control"></textarea></div>
+                        <div class="form-group"><label>Footer Content</label><textarea id="set-footer" class="form-control"></textarea></div>
+                        <div class="form-group"><label>About Us</label><textarea id="set-about" class="form-control"></textarea></div>
+                        <div class="form-group"><label>Terms & Conditions</label><textarea id="set-terms" class="form-control"></textarea></div>
+                        <div class="form-group"><label>Privacy Policy</label><textarea id="set-privacy" class="form-control"></textarea></div>
+                        <div class="form-group"><label>Refund Policy</label><textarea id="set-refund" class="form-control"></textarea></div>
+
+                        <button class="btn btn-success mt-4" onclick="saveContentSettings()"><i class="fas fa-save"></i> Save Content Settings</button>
+                    </div>
+                </div>
+
+                <!-- POPUP & SOCIAL SETTINGS -->
+                <div id="view-popupSettings" class="view-section">
+                    <h2 class="text-xl font-bold mb-6">Popup & Social Media</h2>
+                    
+                    <div class="card mb-6">
+                        <h3 class="font-bold mb-4">Website Popup</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group"><label>Popup Title</label><input type="text" id="set-popup-title" class="form-control"></div>
+                            <div class="form-group"><label>Button Text</label><input type="text" id="set-popup-btn" class="form-control"></div>
+                            <div class="form-group"><label>Image URL</label><input type="text" id="set-popup-img" class="form-control"></div>
+                            <div class="form-group"><label>Destination URL</label><input type="text" id="set-popup-url" class="form-control"></div>
+                            <div class="form-group"><label>Start Date</label><input type="date" id="set-popup-start" class="form-control"></div>
+                            <div class="form-group"><label>End Date</label><input type="date" id="set-popup-end" class="form-control"></div>
+                        </div>
+                        <div class="form-group"><label>Description</label><textarea id="set-popup-desc" class="form-control"></textarea></div>
+                        <div class="form-group flex items-center gap-2 bg-gray-50 p-4 rounded-lg">
+                            <input type="checkbox" id="set-popup-active" style="width:20px;height:20px;accent-color:var(--primary)">
+                            <label for="set-popup-active" style="margin-bottom:0;cursor:pointer">Enable Popup</label>
+                        </div>
+                        <button class="btn btn-primary mt-2" onclick="savePopupSettings()"><i class="fas fa-save"></i> Save Popup</button>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="font-bold mb-4">Social Media Links</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group"><label>Facebook URL</label><input type="text" id="set-soc-fb" class="form-control"></div>
+                            <div class="form-group"><label>WhatsApp URL</label><input type="text" id="set-soc-wa" class="form-control"></div>
+                            <div class="form-group"><label>Telegram URL</label><input type="text" id="set-soc-tg" class="form-control"></div>
+                            <div class="form-group"><label>YouTube URL</label><input type="text" id="set-soc-yt" class="form-control"></div>
+                            <div class="form-group"><label>Instagram URL</label><input type="text" id="set-soc-ig" class="form-control"></div>
+                            <div class="form-group"><label>Discord URL</label><input type="text" id="set-soc-dc" class="form-control"></div>
+                        </div>
+                        <button class="btn btn-success mt-4" onclick="saveSocialSettings()"><i class="fas fa-save"></i> Save Social Links</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Package Modal -->
+    <div id="packageModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title" id="pkgModalTitle">Add Package</h2><button class="modal-close" onclick="closeModal('packageModal')"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="pkg-id">
+                <div class="form-group"><label>Package Name</label><input type="text" id="pkg-name" class="form-control" placeholder="e.g. 200 Glory"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group"><label>Glory Quantity</label><input type="number" id="pkg-qty" class="form-control"></div>
+                    <div class="form-group"><label>Price (৳)</label><input type="number" id="pkg-price" class="form-control"></div>
+                </div>
+                <div class="form-group"><label>Image URL</label><input type="text" id="pkg-img" class="form-control"></div>
+                <div class="form-group"><label>Description</label><textarea id="pkg-desc" class="form-control"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group"><label>Badge</label><select id="pkg-badge" class="form-control"><option value="">None</option><option value="Popular">Popular</option><option value="Best Value">Best Value</option><option value="Recommended">Recommended</option></select></div>
+                    <div class="form-group"><label>Display Order</label><input type="number" id="pkg-order" class="form-control" value="1"></div>
+                </div>
+                <div class="form-group flex items-center gap-2">
+                    <input type="checkbox" id="pkg-active" checked style="width:18px;height:18px">
+                    <label for="pkg-active" style="margin-bottom:0">Available</label>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('packageModal')">Cancel</button><button class="btn btn-primary" onclick="savePackage()">Save Package</button></div>
+        </div>
+    </div>
+
+    <!-- Server Modal -->
+    <div id="serverModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title" id="srvModalTitle">Add Server</h2><button class="modal-close" onclick="closeModal('serverModal')"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="srv-id">
+                <div class="form-group"><label>Server Name</label><input type="text" id="srv-name" class="form-control" placeholder="e.g. Bangladesh"></div>
+                <div class="form-group"><label>Logo URL</label><input type="text" id="srv-logo" class="form-control"></div>
+                <div class="form-group"><label>Description</label><textarea id="srv-desc" class="form-control"></textarea></div>
+                <div class="form-group"><label>Display Position</label><input type="number" id="srv-pos" class="form-control" value="1"></div>
+                <div class="form-group flex items-center gap-2">
+                    <input type="checkbox" id="srv-active" checked style="width:18px;height:18px">
+                    <label for="srv-active" style="margin-bottom:0">Available</label>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('serverModal')">Cancel</button><button class="btn btn-primary" onclick="saveServer()">Save Server</button></div>
+        </div>
+    </div>
+
+    <!-- Banner Modal -->
+    <div id="bannerModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title">Add Banner</h2><button class="modal-close" onclick="closeModal('bannerModal')"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Title</label><input type="text" id="bn-title" class="form-control"></div>
+                <div class="form-group"><label>Subtitle</label><input type="text" id="bn-sub" class="form-control"></div>
+                <div class="form-group"><label>Image URL</label><input type="text" id="bn-img" class="form-control"></div>
+                <div class="form-group"><label>Button Text</label><input type="text" id="bn-btn" class="form-control"></div>
+                <div class="form-group"><label>Destination URL</label><input type="text" id="bn-url" class="form-control"></div>
+                <div class="form-group flex items-center gap-2">
+                    <input type="checkbox" id="bn-active" checked style="width:18px;height:18px">
+                    <label for="bn-active" style="margin-bottom:0">Active</label>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('bannerModal')">Cancel</button><button class="btn btn-primary" onclick="saveBanner()">Save Banner</button></div>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title">Add Tutorial</h2><button class="modal-close" onclick="closeModal('tutorialModal')"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Type</label><select id="tut-type" class="form-control" onchange="toggleTutorialFields()"><option value="image">Image Tutorial</option><option value="video">Video Tutorial</option></select></div>
+                <div class="form-group"><label>Title</label><input type="text" id="tut-title" class="form-control"></div>
+                
+                <div id="tut-video-fields" class="hidden">
+                    <div class="form-group"><label>Video URL (YouTube Embed)</label><input type="text" id="tut-video-url" class="form-control"></div>
+                    <div class="form-group"><label>Thumbnail URL</label><input type="text" id="tut-thumb" class="form-control"></div>
+                    <div class="form-group"><label>Description</label><textarea id="tut-desc" class="form-control"></textarea></div>
+                </div>
+
+                <div id="tut-image-fields">
+                    <div class="form-group"><label>Image URL</label><input type="text" id="tut-img" class="form-control"></div>
+                    <div class="form-group"><label>Destination URL (On Click)</label><input type="text" id="tut-dest-url" class="form-control"></div>
+                    <div class="form-group"><label>Display Position</label><input type="number" id="tut-pos" class="form-control" value="1"></div>
+                </div>
+                
+                <div class="form-group flex items-center gap-2">
+                    <input type="checkbox" id="tut-active" checked style="width:18px;height:18px">
+                    <label for="tut-active" style="margin-bottom:0">Active</label>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('tutorialModal')">Cancel</button><button class="btn btn-primary" onclick="saveTutorial()">Save Tutorial</button></div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="orderDetailModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title">Order Details</h2><button class="modal-close" onclick="closeModal('orderDetailModal')"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body" id="order-detail-content">
+                <!-- Details injected here -->
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('orderDetailModal')">Close</button></div>
+        </div>
+    </div>
+
+    <!-- Add Money Details Modal -->
+    <div id="addmoneyDetailModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title">Add Money Request</h2><button class="modal-close" onclick="closeModal('addmoneyDetailModal')"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body" id="addmoney-detail-content">
+                <!-- Details injected here -->
+            </div>
+            <div class="modal-footer" id="addmoney-modal-actions">
+                <!-- Actions injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ═══════════════ FIREBASE CONFIG ═══════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA6lc6-CFTn56ApNnnATiMUheDpqCaSkQ",
+            authDomain: "sm-topup-f5ae0.firebaseapp.com",
+            projectId: "sm-topup-f5ae0",
+            storageBucket: "sm-topup-f5ae0.firebasestorage.app",
+            messagingSenderId: "27891330556",
+            appId: "1:27891330556:web:844ca508cdc734caacd679"
+        };
+
+        let db, auth;
+        try {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+        } catch (e) { console.error("Firebase init error", e); }
+
+        // ═══════════════ STATE & UTILS ═══════════════
+        const $ = (id) => document.getElementById(id);
+        const esc = (str) => String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        
+        let currentUser = null;
+        let allOrders = [], allUsers = [], allAddMoney = [], allPackages = [], allServers = [], allBanners = [], allTutorials = [], allChats = [];
+        let currentChatId = null;
+        let chatUnsub = null;
+
+        function showToast(msg, isError = false) {
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+                didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+            });
+            Toast.fire({ icon: isError ? 'error' : 'success', title: msg });
+        }
+
+        function openModal(id) { $(id).classList.add('active'); }
+        function closeModal(id) { $(id).classList.remove('active'); }
+        
+        // ═══════════════ FIXED SIDEBAR TOGGLE ═══════════════
+        function toggleSidebar() {
+            const sidebar = $('sidebar');
+            const overlay = $('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            
+            if (sidebar.classList.contains('open')) {
+                overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            } else {
+                overlay.style.display = 'none';
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.getElementById('sidebar-overlay').addEventListener('click', toggleSidebar);
+
+        // ═══════════════ AUTHENTICATION ═══════════════
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                $('loginSec').style.display = 'none';
+                $('adminApp').classList.remove('hidden');
+                initListeners();
+            } else {
+                currentUser = null;
+                $('loginSec').style.display = 'flex';
+                $('adminApp').classList.add('hidden');
+            }
+        });
+
+        function adminLogin() {
+            const email = $('adminEmail').value.trim();
+            const pass = $('adminPass').value;
+            const btn = $('loginBtn');
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+            btn.disabled = true;
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => { showToast('Welcome back, Admin'); })
+                .catch(err => {
+                    Swal.fire('Login Failed', err.message, 'error');
+                })
+                .finally(() => {
+                    btn.innerHTML = 'Sign In';
+                    btn.disabled = false;
+                });
+        }
+
+        function adminLogout() {
+            Swal.fire({ title: 'Logout?', text: "You will be signed out.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes' })
+                .then((result) => { if (result.isConfirmed) auth.signOut(); });
+        }
+
+        // ═══════════════ NAVIGATION ═══════════════
+        const pageTitles = {
+            dashboard: 'Dashboard', orders: 'Order Management', addmoney: 'Add Money Requests',
+            users: 'User Management', packages: 'Glory Packages', servers: 'Server Management',
+            banners: 'Banner Slider', tutorials: 'Tutorials', chat: 'Live Chat',
+            notifications: 'Notifications', paymentSettings: 'Payment Methods',
+            contentSettings: 'Website Content', popupSettings: 'Popup & Social'
+        };
+
+        function showView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            $('view-' + viewId).classList.add('active');
+            $('nav-' + viewId).classList.add('active');
+            $('pageTitle').textContent = pageTitles[viewId];
+            
+            // Close sidebar on mobile after selection
+            if (window.innerWidth < 1024 && $('sidebar').classList.contains('open')) {
+                toggleSidebar();
+            }
+            window.scrollTo(0, 0);
+        }
+
+        // ═══════════════ INIT LISTENERS ═══════════════
+        function initListeners() {
+            // Settings
+            db.collection('settings').doc('general').onSnapshot(doc => {
+                if (doc.exists) {
+                    const d = doc.data();
+                    const defaultLogo = "https://files.catbox.moe/h4zlba.ico";
+                    if(d.logoUrl) { $('sidebarLogo').src = d.logoUrl; $('loginLogo').src = d.logoUrl; }
+                    if(d.siteName) $('pageTitle').textContent = d.siteName + ' Admin';
+                }
+            });
+
+            // Packages
+            db.collection('packages').orderBy('order', 'asc').onSnapshot(snap => {
+                allPackages = [];
+                snap.forEach(doc => allPackages.push({ id: doc.id, ...doc.data() }));
+                renderPackages();
+            });
+
+            // Servers
+            db.collection('servers').orderBy('position', 'asc').onSnapshot(snap => {
+                allServers = [];
+                snap.forEach(doc => allServers.push({ id: doc.id, ...doc.data() }));
+                renderServers();
+            });
+
+            // Users
+            db.collection('users').onSnapshot(snap => {
+                allUsers = [];
+                snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
+                $('kpi-users').textContent = allUsers.length;
+                renderUsers();
+                populateNotifRecipients();
+            });
+
+            // Orders
+            db.collection('orders').orderBy('date', 'desc').onSnapshot(snap => {
+                allOrders = [];
+                let pending = 0, revenue = 0;
+                snap.forEach(doc => {
+                    const o = { id: doc.id, ...doc.data() };
+                    allOrders.push(o);
+                    if (o.status === 'pending') pending++;
+                    if (o.status === 'completed') revenue += parseInt(o.price || 0);
+                });
+                $('kpi-orders').textContent = allOrders.length;
+                $('kpi-pending').textContent = pending;
+                $('kpi-revenue').textContent = '৳' + revenue.toLocaleString();
+                renderOrders();
+                renderRecentOrders();
+            });
+
+            // Add Money
+            db.collection('add_money').orderBy('date', 'desc').onSnapshot(snap => {
+                allAddMoney = [];
+                snap.forEach(doc => allAddMoney.push({ id: doc.id, ...doc.data() }));
+                renderAddMoney();
+                renderRecentAddMoney();
+            });
+
+            // Banners
+            db.collection('banners').onSnapshot(snap => {
+                allBanners = [];
+                snap.forEach(doc => allBanners.push({ id: doc.id, ...doc.data() }));
+                renderBanners();
+            });
+
+            // Tutorials
+            db.collection('tutorials').onSnapshot(snap => {
+                allTutorials = [];
+                snap.forEach(doc => allTutorials.push({ id: doc.id, ...doc.data() }));
+                renderTutorials();
+            });
+
+            // Chats
+            db.collection('chats').onSnapshot(snap => {
+                allChats = [];
+                snap.forEach(doc => allChats.push({ id: doc.id, ...doc.data() }));
+                renderChatList();
+            });
+
+            // Load Settings UI
+            loadSettingsUI();
+        }
+
+        // ═══════════════ RENDER: DASHBOARD ═══════════════
+        function renderRecentOrders() {
+            const tbody = $('recent-orders-table');
+            const recent = allOrders.slice(0, 5);
+            if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No orders yet</td></tr>'; return; }
+            tbody.innerHTML = recent.map(o => `
+                <tr>
+                    <td><div class="font-bold text-sm">${esc(o.userName || 'User')}</div><div class="text-xs text-muted">${esc(o.userEmail||'')}</div></td>
+                    <td>${esc(o.packageName || 'Glory')}</td>
+                    <td class="font-bold">৳${o.price}</td>
+                    <td><span class="badge badge-${o.status==='completed'?'success':o.status==='rejected'?'danger':'pending'}">${o.status.toUpperCase()}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderRecentAddMoney() {
+            const tbody = $('recent-addmoney-table');
+            const recent = allAddMoney.slice(0, 5);
+            if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No requests yet</td></tr>'; return; }
+            tbody.innerHTML = recent.map(r => `
+                <tr>
+                    <td><div class="font-bold text-sm">${esc(r.userName || 'User')}</div></td>
+                    <td class="font-bold">৳${r.amount}</td>
+                    <td>${esc(r.method||'bKash').toUpperCase()}</td>
+                    <td><span class="badge badge-${r.status==='approved'?'success':r.status==='rejected'?'danger':'pending'}">${r.status.toUpperCase()}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // ═══════════════ RENDER: ORDERS ═══════════════
+        function renderOrders(dataToRender = allOrders) {
+            const tbody = $('orders-table-body');
+            if (dataToRender.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No orders found</td></tr>'; return; }
+            
+            tbody.innerHTML = dataToRender.map(o => {
+                let badge = 'pending';
+                if(o.status === 'completed') badge = 'success';
+                if(['rejected','refunded'].includes(o.status)) badge = 'danger';
+                if(['verification','processing'].includes(o.status)) badge = 'info';
+                
+                const date = o.date?.toDate ? o.date.toDate().toLocaleDateString() : 'N/A';
+                return `
+                <tr>
+                    <td class="font-mono text-xs text-muted">#${o.id.slice(-6).toUpperCase()}</td>
+                    <td><div class="font-bold text-sm">${esc(o.userName || 'User')}</div><div class="text-xs text-muted">${esc(o.userEmail||'')}</div></td>
+                    <td>${esc(o.packageName || 'Glory')}</td>
+                    <td class="font-bold text-primary">৳${o.price}</td>
+                    <td><span class="badge badge-${badge}">${o.status.toUpperCase()}</span></td>
+                    <td class="text-sm">${date}</td>
+                    <td>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline btn-sm" onclick="viewOrder('${o.id}')">View</button>
+                            ${o.status === 'pending' || o.status === 'verification' ? `<button class="btn btn-success btn-sm" onclick="updateOrderStatus('${o.id}', 'completed')">Approve</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterOrders() {
+            const q = $('orderSearch').value.toLowerCase();
+            const s = $('orderStatusFilter').value;
+            
+            const filtered = allOrders.filter(o => {
+                const matchQ = (o.userName||'').toLowerCase().includes(q) || 
+                               (o.userEmail||'').toLowerCase().includes(q) || 
+                               o.id.toLowerCase().includes(q);
+                const matchS = s === 'all' || o.status === s;
+                return matchQ && matchS;
+            });
+            
+            renderOrders(filtered);
+        }
+
+        function viewOrder(id) {
+            const o = allOrders.find(x => x.id === id);
+            if (!o) return;
+            
+            $('order-detail-content').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-xs text-muted font-bold uppercase mb-1">Customer Info</p>
+                        <p class="font-bold">${esc(o.userName || 'N/A')}</p>
+                        <p class="text-sm text-muted">${esc(o.userEmail || 'N/A')}</p>
+                        <p class="text-sm text-muted">UID: ${esc(o.userId || 'N/A')}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-xs text-muted font-bold uppercase mb-1">Order Details</p>
+                        <div class="flex justify-between py-1"><span class="text-sm">Package</span><span class="font-bold text-sm">${esc(o.packageName)}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">Server</span><span class="font-bold text-sm">${esc(o.server || 'N/A')}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">Guild ID</span><span class="font-bold text-sm">${esc(o.playerId || 'N/A')}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">Amount</span><span class="font-bold text-sm text-primary">৳${o.price}</span></div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-xs text-muted font-bold uppercase mb-1">Payment Info</p>
+                        <div class="flex justify-between py-1"><span class="text-sm">Method</span><span class="font-bold text-sm">${esc(o.paymentMethod || 'N/A')}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">TrxID</span><span class="font-bold text-sm font-mono">${esc(o.trxId || 'N/A')}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">Sender</span><span class="font-bold text-sm font-mono">${esc(o.senderNumber || 'N/A')}</span></div>
+                    </div>
+                </div>
+            `;
+            openModal('orderDetailModal');
+        }
+
+        async function updateOrderStatus(id, status) {
+            const confirm = await Swal.fire({ title: 'Update Status?', text: `Change status to ${status.toUpperCase()}`, icon: 'question', showCancelButton: true, confirmButtonColor: '#2563EB' });
+            if (!confirm.isConfirmed) return;
+            
+            try {
+                await db.collection('orders').doc(id).update({ status: status });
+                showToast('Order updated successfully');
+                closeModal('orderDetailModal');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        // ═══════════════ RENDER: ADD MONEY ═══════════════
+        function renderAddMoney() {
+            const tbody = $('addmoney-table-body');
+            if (allAddMoney.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No requests found</td></tr>'; return; }
+            
+            tbody.innerHTML = allAddMoney.map(r => {
+                let badge = r.status === 'approved' ? 'success' : r.status === 'rejected' ? 'danger' : 'pending';
+                return `
+                <tr>
+                    <td class="font-mono text-xs text-muted">#${r.id.slice(-6).toUpperCase()}</td>
+                    <td><div class="font-bold text-sm">${esc(r.userName || 'User')}</div><div class="text-xs text-muted">${esc(r.userEmail||'')}</div></td>
+                    <td class="font-bold text-primary">৳${r.amount}</td>
+                    <td>${esc(r.method||'bKash').toUpperCase()}</td>
+                    <td class="font-mono text-sm">${esc(r.trxId)}</td>
+                    <td><span class="badge badge-${badge}">${r.status.toUpperCase()}</span></td>
+                    <td>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline btn-sm" onclick="viewAddMoney('${r.id}')">View</button>
+                            ${r.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveAddMoney('${r.id}', '${r.userId}', ${r.amount})">Approve</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function viewAddMoney(id) {
+            const r = allAddMoney.find(x => x.id === id);
+            if (!r) return;
+            
+            $('addmoney-detail-content').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-xs text-muted font-bold uppercase mb-1">User Info</p>
+                        <p class="font-bold">${esc(r.userName)}</p>
+                        <p class="text-sm text-muted">${esc(r.userEmail)}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-xs text-muted font-bold uppercase mb-1">Transaction Details</p>
+                        <div class="flex justify-between py-1"><span class="text-sm">Amount</span><span class="font-bold text-primary">৳${r.amount}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">Method</span><span class="font-bold">${esc(r.method).toUpperCase()}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">TrxID</span><span class="font-bold font-mono">${esc(r.trxId)}</span></div>
+                        <div class="flex justify-between py-1"><span class="text-sm">Sender</span><span class="font-bold font-mono">${esc(r.senderNumber||'N/A')}</span></div>
+                    </div>
+                </div>
+            `;
+            
+            if (r.status === 'pending') {
+                $('addmoney-modal-actions').innerHTML = `
+                    <button class="btn btn-danger" onclick="rejectAddMoney('${r.id}')">Reject</button>
+                    <button class="btn btn-success" onclick="approveAddMoney('${r.id}', '${r.userId}', ${r.amount})">Approve</button>
+                `;
+            } else {
+                $('addmoney-modal-actions').innerHTML = `<button class="btn btn-outline" onclick="closeModal('addmoneyDetailModal')">Close</button>`;
+            }
+            openModal('addmoneyDetailModal');
+        }
+
+        async function approveAddMoney(reqId, userId, amount) {
+            const confirm = await Swal.fire({ title: 'Approve Request?', text: `Add ৳${amount} to user's wallet?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#16A34A' });
+            if (!confirm.isConfirmed) return;
+            
+            Swal.showLoading();
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const userRef = db.collection('users').doc(userId);
+                    const reqRef = db.collection('add_money').doc(reqId);
+                    
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists) throw "User does not exist!";
+                    
+                    const newBalance = (userDoc.data().balance || 0) + parseInt(amount);
+                    
+                    transaction.update(userRef, { balance: newBalance });
+                    transaction.update(reqRef, { status: 'approved', approvedAt: new Date() });
+                });
+                
+                Swal.fire('Approved!', 'Balance updated successfully.', 'success');
+                closeModal('addmoneyDetailModal');
+            } catch (e) {
+                Swal.fire('Error', e.toString(), 'error');
+            }
+        }
+
+        async function rejectAddMoney(reqId) {
+            const confirm = await Swal.fire({ title: 'Reject Request?', text: "This cannot be undone.", icon: 'error', showCancelButton: true, confirmButtonColor: '#DC2626' });
+            if (!confirm.isConfirmed) return;
+            
+            try {
+                await db.collection('add_money').doc(reqId).update({ status: 'rejected' });
+                showToast('Request rejected');
+                closeModal('addmoneyDetailModal');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        // ═══════════════ RENDER: USERS ═══════════════
+        function renderUsers(dataToRender = allUsers) {
+            const tbody = $('users-table-body');
+            if (dataToRender.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>'; return; }
+            
+            tbody.innerHTML = dataToRender.map(u => {
+                const status = u.suspended ? '<span class="badge badge-danger">Suspended</span>' : '<span class="badge badge-success">Active</span>';
+                return `
+                <tr>
+                    <td class="font-bold text-sm">${esc(u.name || 'User')}</td>
+                    <td class="text-sm">${esc(u.email || 'N/A')}</td>
+                    <td class="font-mono text-xs text-muted">${u.id.slice(-8)}</td>
+                    <td class="font-bold text-primary">৳${u.balance || 0}</td>
+                    <td class="font-bold">${u.totalOrders || 0}</td>
+                    <td>${status}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="toggleUserStatus('${u.id}', ${!!u.suspended})">
+                            ${u.suspended ? 'Reactivate' : 'Suspend'}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterUsers() {
+            const q = $('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(u => 
+                (u.name||'').toLowerCase().includes(q) || 
+                (u.email||'').toLowerCase().includes(q) || 
+                u.id.includes(q)
+            );
+            renderUsers(filtered);
+        }
+
+        async function toggleUserStatus(uid, isSuspended) {
+            try {
+                await db.collection('users').doc(uid).update({ suspended: !isSuspended });
+                showToast('User status updated');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        // ═══════════════ RENDER: PACKAGES ═══════════════
+        function renderPackages() {
+            const grid = $('packages-grid');
+            if (allPackages.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-8 text-muted">No packages created yet.</div>'; return; }
+            
+            grid.innerHTML = allPackages.map(p => `
+                <div class="card mb-0 relative">
+                    ${p.badge ? `<span class="absolute top-4 right-4 badge badge-info">${esc(p.badge)}</span>` : ''}
+                    <img src="${esc(p.image || 'https://files.catbox.moe/h4zlba.ico')}" class="w-full h-40 object-cover rounded-xl mb-4 bg-gray-100" onerror="this.src='https://files.catbox.moe/h4zlba.ico'">
+                    <h3 class="font-bold text-lg">${esc(p.name)}</h3>
+                    <p class="text-sm text-muted mb-4 h-10 overflow-hidden">${esc(p.desc || '')}</p>
+                    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                        <span class="text-2xl font-bold text-primary">৳${p.price}</span>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline btn-sm" onclick="editPackage('${p.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-sm" onclick="deletePackage('${p.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPackageModal() {
+            $('pkgModalTitle').textContent = 'Add Package';
+            $('pkg-id').value = '';
+            $('pkg-name').value = '';
+            $('pkg-qty').value = '';
+            $('pkg-price').value = '';
+            $('pkg-img').value = '';
+            $('pkg-desc').value = '';
+            $('pkg-badge').value = '';
+            $('pkg-order').value = allPackages.length + 1;
+            $('pkg-active').checked = true;
+            openModal('packageModal');
+        }
+
+        function editPackage(id) {
+            const p = allPackages.find(x => x.id === id);
+            if (!p) return;
+            $('pkgModalTitle').textContent = 'Edit Package';
+            $('pkg-id').value = p.id;
+            $('pkg-name').value = p.name || '';
+            $('pkg-qty').value = p.gloryQty || '';
+            $('pkg-price').value = p.price || '';
+            $('pkg-img').value = p.image || '';
+            $('pkg-desc').value = p.desc || '';
+            $('pkg-badge').value = p.badge || '';
+            $('pkg-order').value = p.order || 1;
+            $('pkg-active').checked = p.active !== false;
+            openModal('packageModal');
+        }
+
+        async function savePackage() {
+            const id = $('pkg-id').value;
+            const data = {
+                name: $('pkg-name').value.trim(),
+                gloryQty: parseInt($('pkg-qty').value) || 0,
+                price: parseInt($('pkg-price').value) || 0,
+                image: $('pkg-img').value.trim(),
+                desc: $('pkg-desc').value.trim(),
+                badge: $('pkg-badge').value,
+                order: parseInt($('pkg-order').value) || 1,
+                active: $('pkg-active').checked
+            };
+            
+            if(!data.name || !data.price) return showToast('Name and Price are required', true);
+            
+            try {
+                if (id) {
+                    await db.collection('packages').doc(id).update(data);
+                } else {
+                    await db.collection('packages').add({ ...data, createdAt: new Date() });
+                }
+                showToast('Package saved');
+                closeModal('packageModal');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        async function deletePackage(id) {
+            const confirm = await Swal.fire({ title: 'Delete Package?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#DC2626' });
+            if (confirm.isConfirmed) {
+                await db.collection('packages').doc(id).delete();
+                showToast('Package deleted');
+            }
+        }
+
+        // ═══════════════ RENDER: SERVERS ═══════════════
+        function renderServers() {
+            const grid = $('servers-grid');
+            if (allServers.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-8 text-muted">No servers added yet.</div>'; return; }
+            grid.innerHTML = allServers.map(s => `
+                <div class="card mb-0 text-center relative">
+                    <img src="${esc(s.logo || 'https://files.catbox.moe/h4zlba.ico')}" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 bg-gray-100 border-4 border-gray-50" onerror="this.src='https://files.catbox.moe/h4zlba.ico'">
+                    <h3 class="font-bold text-lg">${esc(s.name)}</h3>
+                    <p class="text-sm text-muted mb-4 h-10 overflow-hidden">${esc(s.desc || '')}</p>
+                    <div class="flex justify-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                        <button class="btn btn-outline btn-sm" onclick="editServer('${s.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteServer('${s.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openServerModal() {
+            $('srvModalTitle').textContent = 'Add Server';
+            $('srv-id').value = '';
+            $('srv-name').value = '';
+            $('srv-logo').value = '';
+            $('srv-desc').value = '';
+            $('srv-pos').value = allServers.length + 1;
+            $('srv-active').checked = true;
+            openModal('serverModal');
+        }
+
+        function editServer(id) {
+            const s = allServers.find(x => x.id === id);
+            if (!s) return;
+            $('srvModalTitle').textContent = 'Edit Server';
+            $('srv-id').value = s.id;
+            $('srv-name').value = s.name || '';
+            $('srv-logo').value = s.logo || '';
+            $('srv-desc').value = s.desc || '';
+            $('srv-pos').value = s.position || 1;
+            $('srv-active').checked = s.active !== false;
+            openModal('serverModal');
+        }
+
+        async function saveServer() {
+            const id = $('srv-id').value;
+            const data = {
+                name: $('srv-name').value.trim(),
+                logo: $('srv-logo').value.trim(),
+                desc: $('srv-desc').value.trim(),
+                position: parseInt($('srv-pos').value) || 1,
+                active: $('srv-active').checked
+            };
+            if(!data.name) return showToast('Server name required', true);
+            
+            try {
+                if (id) await db.collection('servers').doc(id).update(data);
+                else await db.collection('servers').add(data);
+                showToast('Server saved');
+                closeModal('serverModal');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        async function deleteServer(id) {
+            if ((await Swal.fire({ title: 'Delete Server?', icon: 'warning', showCancelButton: true })).isConfirmed) {
+                await db.collection('servers').doc(id).delete();
+                showToast('Server deleted');
+            }
+        }
+
+        // ═══════════════ RENDER: BANNERS ═══════════════
+        function renderBanners() {
+            const grid = $('banners-grid');
+            if (allBanners.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-8 text-muted">No banners found.</div>'; return; }
+            grid.innerHTML = allBanners.map(b => `
+                <div class="card mb-0 relative">
+                    <img src="${esc(b.image)}" class="w-full h-48 object-cover rounded-xl mb-4 bg-gray-100" onerror="this.src='https://via.placeholder.com/600x300?text=Banner'">
+                    <h3 class="font-bold text-lg">${esc(b.title || 'No Title')}</h3>
+                    <p class="text-sm text-muted mb-4">${esc(b.subtitle || '')}</p>
+                    <button class="btn btn-danger btn-sm absolute top-4 right-4" onclick="deleteBanner('${b.id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function openBannerModal() {
+            $('bn-title').value = ''; $('bn-sub').value = ''; $('bn-img').value = ''; $('bn-btn').value = ''; $('bn-url').value = '';
+            openModal('bannerModal');
+        }
+
+        async function saveBanner() {
+            const data = {
+                title: $('bn-title').value.trim(), subtitle: $('bn-sub').value.trim(),
+                image: $('bn-img').value.trim(), btnText: $('bn-btn').value.trim(),
+                url: $('bn-url').value.trim(), active: $('bn-active').checked
+            };
+            if(!data.image) return showToast('Image URL required', true);
+            await db.collection('banners').add(data);
+            showToast('Banner added');
+            closeModal('bannerModal');
+        }
+
+        async function deleteBanner(id) {
+            if ((await Swal.fire({ title: 'Delete Banner?', icon: 'warning', showCancelButton: true })).isConfirmed) {
+                await db.collection('banners').doc(id).delete();
+                showToast('Banner deleted');
+            }
+        }
+
+        // ═══════════════ RENDER: TUTORIALS ═══════════════
+        function renderTutorials() {
+            const videoCont = $('video-tutorial-container');
+            const imgGrid = $('image-tutorials-grid');
+            
+            const video = allTutorials.find(t => t.type === 'video');
+            if (video) {
+                videoCont.innerHTML = `
+                    <div class="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-xl border border-blue-100">
+                        <img src="${esc(video.thumbnail || 'https://via.placeholder.com/300x160')}" class="w-full md:w-48 h-28 object-cover rounded-lg">
+                        <div class="flex-1 text-center md:text-left">
+                            <h4 class="font-bold text-lg">${esc(video.title)}</h4>
+                            <p class="text-sm text-muted mt-1">${esc(video.desc)}</p>
+                        </div>
+                        <button class="btn btn-danger btn-sm mt-2 md:mt-0" onclick="deleteTutorial('${video.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                `;
+            } else {
+                videoCont.innerHTML = '<p class="text-muted text-sm">No video tutorial added yet.</p>';
+            }
+
+            const images = allTutorials.filter(t => t.type === 'image');
+            if (images.length === 0) { imgGrid.innerHTML = '<div class="col-span-full text-center py-4 text-muted">No image tutorials found.</div>'; return; }
+            imgGrid.innerHTML = images.map(t => `
+                <div class="card mb-0 text-center relative">
+                    <img src="${esc(t.image)}" class="w-full h-40 object-cover rounded-xl mb-4 bg-gray-100">
+                    <h4 class="font-bold text-md">${esc(t.title)}</h4>
+                    <p class="text-xs text-blue-500 mt-1 truncate">${esc(t.destUrl || 'No link')}</p>
+                    <button class="btn btn-danger btn-sm mt-4 w-full" onclick="deleteTutorial('${t.id}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function openTutorialModal() {
+            $('tut-type').value = 'image'; toggleTutorialFields();
+            $('tut-title').value = ''; $('tut-video-url').value = ''; $('tut-thumb').value = ''; $('tut-desc').value = '';
+            $('tut-img').value = ''; $('tut-dest-url').value = ''; $('tut-pos').value = 1;
+            openModal('tutorialModal');
+        }
+
+        function toggleTutorialFields() {
+            const type = $('tut-type').value;
+            $('tut-video-fields').classList.toggle('hidden', type !== 'video');
+            $('tut-image-fields').classList.toggle('hidden', type !== 'image');
+        }
+
+        async function saveTutorial() {
+            const type = $('tut-type').value;
+            const data = {
+                type, title: $('tut-title').value.trim(), active: $('tut-active').checked
+            };
+            if (type === 'video') {
+                data.videoUrl = $('tut-video-url').value.trim();
+                data.thumbnail = $('tut-thumb').value.trim();
+                data.desc = $('tut-desc').value.trim();
+            } else {
+                data.image = $('tut-img').value.trim();
+                data.destUrl = $('tut-dest-url').value.trim();
+                data.position = parseInt($('tut-pos').value) || 1;
+            }
+            if(!data.title) return showToast('Title required', true);
+            await db.collection('tutorials').add(data);
+            showToast('Tutorial saved');
+            closeModal('tutorialModal');
+        }
+
+        async function deleteTutorial(id) {
+            if ((await Swal.fire({ title: 'Delete Tutorial?', icon: 'warning', showCancelButton: true })).isConfirmed) {
+                await db.collection('tutorials').doc(id).delete();
+                showToast('Tutorial deleted');
+            }
+        }
+
+        // ═══════════════ LIVE CHAT ═══════════════
+        function renderChatList() {
+            const cont = $('chat-list-container');
+            if (allChats.length === 0) { cont.innerHTML = '<div class="p-4 text-center text-muted text-sm">No conversations yet.</div>'; return; }
+            
+            cont.innerHTML = allChats.map(c => `
+                <div class="chat-list-item ${currentChatId === c.id ? 'active' : ''}" onclick="openChat('${c.id}')">
+                    <div class="font-bold text-sm text-dark">${esc(c.userName || 'User')}</div>
+                    <div class="text-xs text-muted truncate mt-1">${esc(c.lastMessage || 'No messages')}</div>
+                </div>
+            `).join('');
+        }
+
+        function openChat(id) {
+            currentChatId = id;
+            renderChatList();
+            const chat = allChats.find(c => c.id === id);
+            if(!chat) return;
+            
+            $('chat-header').textContent = chat.userName || 'User Chat';
+            $('chat-input-area').style.display = 'flex';
+            
+            if(chatUnsub) chatUnsub();
+            chatUnsub = db.collection('chats').doc(id).collection('messages').orderBy('timestamp', 'asc').onSnapshot(snap => {
+                const msgsCont = $('chat-messages-container');
+                let html = '';
+                snap.forEach(doc => {
+                    const m = doc.data();
+                    const isAdmin = m.sender === 'admin';
+                    html += `<div class="msg ${isAdmin ? 'admin' : 'user'}">${esc(m.text)}</div>`;
+                });
+                msgsCont.innerHTML = html;
+                msgsCont.scrollTop = msgsCont.scrollHeight;
+            });
+        }
+
+        async function sendAdminChat() {
+            const input = $('adminChatInput');
+            const text = input.value.trim();
+            if(!text || !currentChatId) return;
+            input.value = '';
+            
+            await db.collection('chats').doc(currentChatId).collection('messages').add({
+                text, sender: 'admin', timestamp: new Date()
+            });
+            await db.collection('chats').doc(currentChatId).update({
+                lastMessage: text, updatedAt: new Date()
+            });
+        }
+
+        // ═══════════════ NOTIFICATIONS ═══════════════
+        function populateNotifRecipients() {
+            const sel = $('notifRecipient');
+            const curr = sel.value;
+            sel.innerHTML = '<option value="all">All Users</option>' + allUsers.map(u => `<option value="${u.id}">${esc(u.name || u.email)}</option>`).join('');
+            sel.value = curr;
+        }
+
+        async function sendNotification() {
+            const title = $('notifTitle').value.trim();
+            const body = $('notifBody').value.trim();
+            const recipient = $('notifRecipient').value;
+            
+            if(!title || !body) return showToast('Title and message required', true);
+            
+            try {
+                if(recipient === 'all') {
+                    await db.collection('notifications').add({
+                        title, body, audience: 'all', createdAt: new Date(), readBy: []
+                    });
+                } else {
+                    await db.collection('users').doc(recipient).collection('notifications').add({
+                        title, body, createdAt: new Date(), read: false
+                    });
+                }
+                showToast('Notification sent');
+                $('notifTitle').value = ''; $('notifBody').value = '';
+            } catch(e) {
+                Swal.fire('Error', e.message, 'error');
+            }
+        }
+
+        // ═══════════════ SETTINGS ═══════════════
+        function switchPayTab(tab) {
+            document.querySelectorAll('.pay-config').forEach(el => el.classList.add('hidden'));
+            $('pay-config-' + tab).classList.remove('hidden');
+            
+            document.querySelectorAll('#view-paymentSettings .btn').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline');
+            });
+            $('tab-' + tab).classList.remove('btn-outline');
+            $('tab-' + tab).classList.add('btn-primary');
+        }
+
+        async function savePaymentSettings() {
+            const data = {
+                bkash: { number: $('set-bkash-num').value, logo: $('set-bkash-logo').value, min: $('set-bkash-min').value, max: $('set-bkash-max').value, instructions: $('set-bkash-inst').value, img1: $('set-bkash-img1').value, img2: $('set-bkash-img2').value },
+                nagad: { number: $('set-nagad-num').value, logo: $('set-nagad-logo').value, min: $('set-nagad-min').value, max: $('set-nagad-max').value, instructions: $('set-nagad-inst').value, img1: $('set-nagad-img1').value, img2: $('set-nagad-img2').value },
+                rocket: { number: $('set-rocket-num').value, logo: $('set-rocket-logo').value, min: $('set-rocket-min').value, max: $('set-rocket-max').value, instructions: $('set-rocket-inst').value, img1: $('set-rocket-img1').value, img2: $('set-rocket-img2').value }
+            };
+            try {
+                await db.collection('settings').doc('payments').set(data, { merge: true });
+                showToast('Payment settings saved');
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        async function saveContentSettings() {
+            const data = {
+                siteName: $('set-site-name').value, logoUrl: $('set-logo-url').value, faviconUrl: $('set-favicon-url').value,
+                heroTitle: $('set-hero-title').value, heroDesc: $('set-hero-desc').value, contactInfo: $('set-contact').value,
+                footerContent: $('set-footer').value, aboutUs: $('set-about').value, terms: $('set-terms').value,
+                privacy: $('set-privacy').value, refund: $('set-refund').value
+            };
+            try {
+                await db.collection('settings').doc('general').set(data, { merge: true });
+                showToast('Content settings saved');
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        async function savePopupSettings() {
+            const data = {
+                title: $('set-popup-title').value, description: $('set-popup-desc').value, image: $('set-popup-img').value,
+                btnText: $('set-popup-btn').value, url: $('set-popup-url').value, startDate: $('set-popup-start').value,
+                endDate: $('set-popup-end').value, active: $('set-popup-active').checked
+            };
+            await db.collection('settings').doc('popup').set(data, { merge: true });
+            showToast('Popup settings saved');
+        }
+
+        async function saveSocialSettings() {
+            const data = {
+                facebook: $('set-soc-fb').value, whatsapp: $('set-soc-wa').value, telegram: $('set-soc-tg').value,
+                youtube: $('set-soc-yt').value, instagram: $('set-soc-ig').value, discord: $('set-soc-dc').value
+            };
+            await db.collection('settings').doc('social').set(data, { merge: true });
+            showToast('Social links saved');
+        }
+
+        function loadSettingsUI() {
+            db.collection('settings').doc('payments').get().then(doc => {
+                if(!doc.exists) return;
+                const d = doc.data();
+                ['bkash', 'nagad', 'rocket'].forEach(k => {
+                    if(d[k]) {
+                        if($('set-'+k+'-num')) $('set-'+k+'-num').value = d[k].number || '';
+                        if($('set-'+k+'-logo')) $('set-'+k+'-logo').value = d[k].logo || '';
+                        if($('set-'+k+'-min')) $('set-'+k+'-min').value = d[k].min || '';
+                        if($('set-'+k+'-max')) $('set-'+k+'-max').value = d[k].max || '';
+                        if($('set-'+k+'-inst')) $('set-'+k+'-inst').value = d[k].instructions || '';
+                        if($('set-'+k+'-img1')) $('set-'+k+'-img1').value = d[k].img1 || '';
+                        if($('set-'+k+'-img2')) $('set-'+k+'-img2').value = d[k].img2 || '';
+                    }
+                });
+            });
+
+            db.collection('settings').doc('general').get().then(doc => {
+                if(!doc.exists) return;
+                const d = doc.data();
+                $('set-site-name').value = d.siteName || 'GLORY X BD';
+                $('set-logo-url').value = d.logoUrl || 'https://files.catbox.moe/h4zlba.ico';
+                $('set-favicon-url').value = d.faviconUrl || 'https://files.catbox.moe/h4zlba.ico';
+                $('set-hero-title').value = d.heroTitle || '';
+                $('set-hero-desc').value = d.heroDesc || '';
+                $('set-contact').value = d.contactInfo || '';
+                $('set-footer').value = d.footerContent || '';
+                $('set-about').value = d.aboutUs || '';
+                $('set-terms').value = d.terms || '';
+                $('set-privacy').value = d.privacy || '';
+                $('set-refund').value = d.refund || '';
+            });
+
+            db.collection('settings').doc('popup').get().then(doc => {
+                if(!doc.exists) return;
+                const d = doc.data();
+                $('set-popup-title').value = d.title || '';
+                $('set-popup-desc').value = d.description || '';
+                $('set-popup-img').value = d.image || '';
+                $('set-popup-btn').value = d.btnText || '';
+                $('set-popup-url').value = d.url || '';
+                $('set-popup-start').value = d.startDate || '';
+                $('set-popup-end').value = d.endDate || '';
+                $('set-popup-active').checked = d.active || false;
+            });
+
+            db.collection('settings').doc('social').get().then(doc => {
+                if(!doc.exists) return;
+                const d = doc.data();
+                $('set-soc-fb').value = d.facebook || '';
+                $('set-soc-wa').value = d.whatsapp || '';
+                $('set-soc-tg').value = d.telegram || '';
+                $('set-soc-yt').value = d.youtube || '';
+                $('set-soc-ig').value = d.instagram || '';
+                $('set-soc-dc').value = d.discord || '';
+            });
+        }
+
+    </script>
+</body>
+</html>
