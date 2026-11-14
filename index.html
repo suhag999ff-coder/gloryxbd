@@ -1,1459 +1,377 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GLORY X BD - Premium Guild Glory</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="https://files.catbox.moe/h4zlba.ico">
-    
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-
-    <style>
-        :root {
-            --primary: #2563EB;
-            --primary-hover: #1D4ED8;
-            --secondary: #EAB308;
-            --dark: #111827;
-            --bg: #F4F6FA;
-            --card: #FFFFFF;
-            --success: #16A34A;
-            --danger: #DC2626;
-            --muted: #64748B;
-            --border: #E2E8F0;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--dark); overflow-x: hidden; padding-bottom: 70px; }
-        @media (min-width: 768px) { body { padding-bottom: 0; } }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-        
-        /* Header */
-        header { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
-        .header-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--dark); }
-        .header-logo img { width: 36px; height: 36px; border-radius: 8px; object-fit: contain; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .header-logo span { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: var(--dark); }
-        
-        .wallet-badge { display: inline-flex; align-items: center; gap: 6px; background: #FFF7ED; border: 1px solid #FED7AA; color: #C2410C; padding: 6px 12px; border-radius: 20px; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        .wallet-badge:hover { background: #FFEDD5; }
-        .avatar-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; overflow: hidden; cursor: pointer; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
-        .avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-        @media (min-width: 768px) { .bottom-nav { display: none; } }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; text-decoration: none; width: 20%; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 20px; }
-
-        /* Containers */
-        .page-section { display: none; animation: fadeIn 0.3s ease; }
-        .page-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .main-wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px; }
-
-        /* Cards & Grids */
-        .glass-card { background: #fff; border-radius: 20px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        .pkg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        @media (min-width: 768px) { .pkg-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; } }
-        
-        /* Package Card */
-        .pkg-card { background: #fff; border-radius: 16px; border: 2px solid transparent; overflow: hidden; position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
-        .pkg-card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px -8px rgba(37,99,235,0.2); border-color: #BFDBFE; }
-        .pkg-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #F8FAFC; padding: 10px; }
-        .pkg-info { padding: 12px; text-align: center; }
-        .pkg-name { font-weight: 800; font-size: 14px; color: var(--dark); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pkg-price { font-weight: 800; font-size: 16px; color: var(--primary); }
-        .pkg-badge { position: absolute; top: 8px; right: 8px; background: var(--secondary); color: var(--dark); font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* Banner Slider */
-        .banner-container { position: relative; border-radius: 20px; overflow: hidden; margin-bottom: 24px; aspect-ratio: 2/1; background: #E2E8F0; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        @media (min-width: 768px) { .banner-container { aspect-ratio: 3/1; } }
-        .banner-track { display: flex; height: 100%; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .banner-slide { min-width: 100%; height: 100%; position: relative; }
-        .banner-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .banner-dots { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
-        .banner-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; transition: 0.3s; }
-        .banner-dot.active { background: #fff; width: 24px; border-radius: 4px; }
-
-        /* Quick Links */
-        .quick-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
-        .ql-item { background: #fff; border-radius: 16px; padding: 16px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-        .ql-item:hover { background: #F8FAFC; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .ql-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
-        .ql-text { font-size: 11px; font-weight: 800; color: var(--dark); text-align: center; }
-
-        /* Section Titles */
-        .section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: var(--dark); }
-        .section-title::before { content: ''; width: 4px; height: 20px; border-radius: 4px; background: linear-gradient(180deg, var(--primary), var(--secondary)); }
-
-        /* Buttons */
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: 0.2s; text-decoration: none; }
-        .btn:active { transform: scale(0.97); }
-        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--dark); }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-success { background: var(--success); color: #fff; }
-        .btn-danger { background: var(--danger); color: #fff; }
-        .btn-sm { padding: 8px 16px; font-size: 12px; border-radius: 8px; }
-        .btn-full { width: 100%; }
-
-        /* Inputs */
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; font-family: inherit; font-weight: 600; outline: none; transition: 0.2s; background: #F8FAFC; color: var(--dark); }
-        .form-control:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
-
-        /* Modals */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
-        @media (min-width: 768px) { .modal-overlay { align-items: center; } }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: #fff; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease; padding-bottom: env(safe-area-inset-bottom); }
-        @media (min-width: 768px) { .modal-content { border-radius: 24px; max-height: 85vh; } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 10; border-radius: 24px 24px 0 0; }
-        .modal-title { font-size: 18px; font-weight: 800; font-family: 'Sora', sans-serif; }
-        .modal-close { background: #F1F5F9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; }
-        .modal-body { padding: 20px; }
-
-        /* Auth Page */
-        .auth-page { position: fixed; inset: 0; background: linear-gradient(135deg, #111827 0%, #1E293B 100%); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .auth-page.active { display: flex; }
-        .auth-card { background: #fff; border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; }
-        .auth-logo { width: 70px; height: 70px; margin: 0 auto 16px; display: block; border-radius: 16px; box-shadow: 0 10px 20px rgba(234,179,8,0.3); background: #F8FAFC; padding: 8px; object-fit: contain; }
-        .auth-title { text-align: center; font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 4px; color: var(--dark); }
-        .auth-sub { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 24px; font-weight: 600; }
-        .auth-tabs { display: flex; background: #F1F5F9; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
-        .auth-tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; transition: 0.2s; border: none; background: transparent; }
-        .auth-tab.active { background: #fff; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
-        /* Order Flow */
-        .step-container { display: none; }
-        .step-container.active { display: block; animation: fadeIn 0.3s ease; }
-        .server-option { display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid var(--border); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
-        .server-option:hover { border-color: #BFDBFE; background: #F8FAFC; }
-        .server-option.selected { border-color: var(--primary); background: #EFF6FF; }
-        .server-option img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        
-        .pay-method-card { display: flex; align-items: center; gap: 16px; padding: 16px; border: 2px solid var(--border); border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
-        .pay-method-card:hover { border-color: #BFDBFE; background: #F8FAFC; }
-        .pay-method-card.selected { border-color: var(--primary); background: #EFF6FF; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .pay-method-card img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
-        /* Orders List */
-        .order-item { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
-        .order-item:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
-        .order-status { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        .status-pending { background: #FEF3C7; color: #92400E; }
-        .status-completed { background: #D1FAE5; color: #065F46; }
-        .status-rejected { background: #FEE2E2; color: #991B1B; }
-        .order-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
-        .order-row span:first-child { color: var(--muted); font-weight: 600; }
-        .order-row span:last-child { font-weight: 800; color: var(--dark); }
-
-        /* Chat */
-        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 160px); background: #fff; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .chat-msg.user { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-msg.admin { background: #fff; color: var(--dark); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .chat-input-area { padding: 12px 16px; background: #fff; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-
-        /* Toast */
-        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { background: var(--dark); color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideDown 0.3s ease; display: flex; align-items: center; gap: 10px; }
-        .toast.error { background: var(--danger); }
-        .toast.success { background: var(--success); }
-        @keyframes slideDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-
-        .hidden { display: none !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0B0E14">
+<title>GLORY X BD — Free Fire Guild Glory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- SPLASH SCREEN -->
-    <div id="splashScreen" style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.5s;">
-        <img src="https://files.catbox.moe/h4zlba.ico" style="width:80px;height:80px;animation:pulse 1.5s infinite">
-        <h1 style="margin-top:20px;font-family:'Sora';font-weight:800;color:#111827;font-size:24px;">GLORY X BD</h1>
-        <div style="margin-top:10px;width:30px;height:30px;border:3px solid #E2E8F0;border-top-color:#2563EB;border-radius:50%;animation:spin 1s linear infinite"></div>
-        <style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes spin{to{transform:rotate(360deg)}}</style>
+<!-- SVG ICONS -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21v-6h6v6"/></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V4h8v3M3 12h18"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18"/><path d="M7.5 8a2.5 2.5 0 1 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 1 1 0 5"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v3"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1V9H5a2 2 0 0 1-2-2z"/><circle cx="16" cy="14.5" r="1.3" fill="currentColor"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+<symbol id="i-tg" viewBox="0 0 24 24"><path d="M21.5 3.2 2.7 10.6c-1 .4-1 1.2-.2 1.4l4.8 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.4l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.8c.3-1.2-.5-1.8-1.2-1.5zM8.4 13l9.2-5.8c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.2z"/></symbol>
+<symbol id="i-grp" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><circle cx="5.5" cy="9.5" r="2.3"/><circle cx="18.5" cy="9.5" r="2.3"/><path d="M12 12.5c-3 0-5.5 1.7-5.5 4V19h11v-2.5c0-2.3-2.5-4-5.5-4z"/></symbol>
+<symbol id="i-yt" viewBox="0 0 24 24"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4a2.5 2.5 0 0 0-1.8 1.8C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM10 15V9l5.2 3z"/></symbol>
+<symbol id="i-ticket" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12M16 6v12M3 10h2M3 14h2M19 10h2M19 14h2"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 3h16z"/><path d="M10 21a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+<symbol id="i-google" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" stroke="none"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" stroke="none"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" stroke="none"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" stroke="none"/></symbol>
+</svg>
+
+<div id="app">
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand" onclick="goSection('home')">
+      <div class="brand-logo"><i class="fas fa-crown"></i></div>
+      <div class="brand-name">GLORY <span>X</span> BD</div>
     </div>
+    <div class="header-right" id="guestHeader">
+      <button class="btn-login-top" onclick="openLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
+    </div>
+    <div class="header-right hidden" id="userHeader">
+      <button class="wallet-pill" onclick="goSection('addmoney')">
+        <svg class="ic"><use href="#i-wallet"/></svg>
+        <span id="headerBalance">0</span>৳
+      </button>
+      <button class="avatar-btn" onclick="openSidePanel()" id="headerAvatar">U</button>
+    </div>
+  </div>
+</header>
 
-    <!-- AUTH PAGE -->
-    <div id="authPage" class="auth-page">
-        <div class="auth-card">
-            <img src="https://files.catbox.moe/h4zlba.ico" class="auth-logo" alt="GLORY X BD" id="authLogo">
-            <h2 class="auth-title">Welcome Back</h2>
-            <p class="auth-sub">Login or create an account to continue</p>
-            
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchAuthTab('login')" id="tabLogin">Login</button>
-                <button class="auth-tab" onclick="switchAuthTab('register')" id="tabRegister">Register</button>
-            </div>
+<!-- HOME SECTION -->
+<main id="homeSection" class="page-section">
+  <div class="hero-slider">
+    <div class="slider-track" id="sliderTrack"></div>
+    <div class="slider-dots" id="sliderDots"></div>
+  </div>
 
-            <!-- Login Form -->
-            <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="loginEmail" class="form-control" placeholder="you@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
-                </div>
-                <div class="flex justify-end mb-4">
-                    <a href="#" onclick="handleForgotPassword()" style="font-size:12px;font-weight:700;color:var(--primary);text-decoration:none">Forgot Password?</a>
-                </div>
-                <button type="submit" class="btn btn-primary btn-full" id="btnLogin">Sign In</button>
-            </form>
+  <!-- 3 QUICK LINKS (DO NOT REMOVE) -->
+  <div class="quick-links">
+    <a class="q-link" data-link="telegram-channel" href="#">
+      <div class="q-icon" style="background:rgba(34,158,217,.15);color:#229ED9;"><svg class="ic"><use href="#i-tg"/></svg></div>
+      <span>Support</span>
+    </a>
+    <a class="q-link" data-link="telegram-group" href="#">
+      <div class="q-icon" style="background:rgba(14,165,233,.15);color:#0EA5E9;"><svg class="ic"><use href="#i-grp"/></svg></div>
+      <span>Join Group</span>
+    </a>
+    <a class="q-link" data-link="youtube-channel" href="#">
+      <div class="q-icon" style="background:rgba(239,68,68,.15);color:#EF4444;"><svg class="ic"><use href="#i-yt"/></svg></div>
+      <span>YouTube</span>
+    </a>
+  </div>
 
-            <!-- Register Form -->
-            <form id="registerForm" class="hidden" onsubmit="event.preventDefault(); handleRegister();">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="regName" class="form-control" placeholder="John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="regEmail" class="form-control" placeholder="you@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="regPhone" class="form-control" placeholder="01XXXXXXXXX" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="regPass" class="form-control" placeholder="Min 6 characters" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-full" id="btnRegister">Create Account</button>
-            </form>
+  <!-- PRODUCT GRID -->
+  <div class="section-title"><span></span><h2>Guild Glory Store</h2><small>Select Game</small></div>
+  <div class="product-grid" id="homeProductGrid"></div>
 
-            <button onclick="closeAuth()" style="width:100%;margin-top:16px;background:none;border:none;font-size:12px;color:var(--muted);font-weight:700;cursor:pointer">Continue as Guest</button>
+  <!-- DYNAMIC DESC BOXES (Admin controlled) -->
+  <div id="descBoxesWrap" class="desc-boxes-wrap"></div>
+</main>
+
+<!-- PRODUCT DETAILS SECTION -->
+<main id="productSection" class="page-section hidden">
+  <button class="back-btn" onclick="goSection('home')"><svg class="ic"><use href="#i-arrow"/></svg>Back to Store</button>
+
+  <div class="product-hero">
+    <div class="product-hero-img"><img id="productImage" src="" alt="Game"></div>
+    <div class="product-hero-info">
+      <h1 id="productName">Game Name</h1>
+      <div class="product-tags">
+        <span><svg class="ic"><use href="#i-bolt"/></svg>Instant Delivery</span>
+        <span><svg class="ic"><use href="#i-shield"/></svg>100% Safe</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-head"><span class="step-num">1</span><h3>Select Package</h3></div>
+    <div class="step-body"><div class="package-grid" id="packageGrid"></div></div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-head"><span class="step-num">2</span><h3>Account Info</h3></div>
+    <div class="step-body">
+      <div id="dynamicInputsWrap"></div>
+      <button class="btn-outline" onclick="checkPlayerName()">
+        <svg class="ic"><use href="#i-shield"/></svg>Check Player Name
+      </button>
+      <div class="name-result" id="nameResult"></div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-head"><span class="step-num">3</span><h3>Payment Method</h3></div>
+    <div class="step-body">
+      <div class="pay-options">
+        <div class="pay-option on" id="pay-wallet" onclick="selectPayMethod('wallet')">
+          <div class="pay-logo" id="walletLogoBox"></div>
+          <strong>Wallet Pay</strong>
+          <small>Bal: <span id="productBalance">0</span>৳</small>
         </div>
-    </div>
-
-    <!-- MAIN APP -->
-    <div id="mainApp" class="hidden">
-        
-        <!-- HEADER -->
-        <header>
-            <a href="#" class="header-logo" onclick="showPage('home');return false">
-                <img src="https://files.catbox.moe/h4zlba.ico" id="headerLogo" alt="Logo">
-                <span id="headerSiteName">GLORY X BD</span>
-            </a>
-            <div class="flex items-center gap-3">
-                <div class="wallet-badge" id="headerWallet" onclick="checkAuth('wallet')">
-                    <i class="fas fa-wallet text-xs"></i> <span id="headerBalance">0</span>
-                </div>
-                <div class="avatar-btn" id="headerAvatar" onclick="checkAuth('account')">
-                    <i class="fas fa-user"></i>
-                </div>
-            </div>
-        </header>
-
-        <div class="main-wrap">
-            <!-- HOME PAGE -->
-            <div id="page-home" class="page-section active">
-                <!-- Banner Slider -->
-                <div class="banner-container" id="bannerContainer">
-                    <div class="banner-track" id="bannerTrack">
-                        <!-- Dynamically loaded -->
-                    </div>
-                    <div class="banner-dots" id="bannerDots"></div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="quick-links">
-                    <div class="ql-item" onclick="showPage('packages')">
-                        <div class="ql-icon" style="background:linear-gradient(135deg,#2563EB,#1D4ED8)"><i class="fas fa-gem"></i></div>
-                        <div class="ql-text">Glory</div>
-                    </div>
-                    <div class="ql-item" onclick="checkAuth('addmoney')">
-                        <div class="ql-icon" style="background:linear-gradient(135deg,#EAB308,#CA8A04)"><i class="fas fa-wallet"></i></div>
-                        <div class="ql-text">Add Money</div>
-                    </div>
-                    <div class="ql-item" onclick="checkAuth('orders')">
-                        <div class="ql-icon" style="background:linear-gradient(135deg,#16A34A,#15803D)"><i class="fas fa-shopping-bag"></i></div>
-                        <div class="ql-text">Orders</div>
-                    </div>
-                    <div class="ql-item" onclick="checkAuth('chat')">
-                        <div class="ql-icon" style="background:linear-gradient(135deg,#DC2626,#B91C1C)"><i class="fas fa-headset"></i></div>
-                        <div class="ql-text">Support</div>
-                    </div>
-                </div>
-
-                <!-- Glory Packages Section -->
-                <div class="section-title">Glory Packages</div>
-                <div class="pkg-grid" id="homePackagesGrid">
-                    <!-- Dynamically loaded -->
-                </div>
-
-                <!-- How To Order -->
-                <div class="section-title mt-8">How To Order</div>
-                <div class="glass-card">
-                    <div class="space-y-4">
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">1</div>
-                            <div><h4 class="font-bold text-sm">Select Package</h4><p class="text-xs text-muted mt-1">Choose your desired glory package.</p></div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">2</div>
-                            <div><h4 class="font-bold text-sm">Enter Guild Info</h4><p class="text-xs text-muted mt-1">Provide your Free Fire Guild ID and Server.</p></div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">3</div>
-                            <div><h4 class="font-bold text-sm">Make Payment</h4><p class="text-xs text-muted mt-1">Pay via bKash, Nagad, Rocket or Wallet.</p></div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">4</div>
-                            <div><h4 class="font-bold text-sm">Get Glory</h4><p class="text-xs text-muted mt-1">Glory will be added to your guild within 1-24 hours.</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tutorial Section -->
-                <div class="section-title mt-8">Tutorials</div>
-                <div id="tutorialsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dynamically loaded -->
-                </div>
-
-                <!-- Social Media -->
-                <div class="section-title mt-8">Join Our Community</div>
-                <div id="socialLinksGrid" class="flex flex-wrap gap-3 justify-center">
-                    <!-- Dynamically loaded -->
-                </div>
-            </div>
-
-            <!-- PACKAGES PAGE -->
-            <div id="page-packages" class="page-section">
-                <div class="section-title">All Glory Packages</div>
-                <div class="pkg-grid" id="allPackagesGrid">
-                    <!-- Dynamically loaded -->
-                </div>
-            </div>
-
-            <!-- ORDER PAGE -->
-            <div id="page-order" class="page-section">
-                <button class="btn btn-outline btn-sm mb-4" onclick="showPage('packages')"><i class="fas fa-arrow-left"></i> Back</button>
-                
-                <!-- Step 1: Server -->
-                <div id="step-server" class="step-container active">
-                    <div class="glass-card">
-                        <h2 class="text-lg font-bold mb-4">Step 1: Select Server</h2>
-                        <div id="serverList">
-                            <!-- Dynamically loaded -->
-                        </div>
-                        <button class="btn btn-primary btn-full mt-4" onclick="nextOrderStep(2)" id="btnStep1Next" disabled>Next</button>
-                    </div>
-                </div>
-
-                <!-- Step 2: Package Info -->
-                <div id="step-package" class="step-container">
-                    <div class="glass-card text-center">
-                        <h2 class="text-lg font-bold mb-4">Step 2: Package Information</h2>
-                        <img id="orderPkgImg" class="w-24 h-24 mx-auto rounded-xl object-cover mb-3 bg-gray-100">
-                        <h3 id="orderPkgName" class="font-bold text-xl"></h3>
-                        <p id="orderPkgQty" class="text-muted text-sm mt-1"></p>
-                        <p id="orderPkgPrice" class="text-primary font-bold text-2xl mt-2"></p>
-                        <button class="btn btn-primary btn-full mt-6" onclick="nextOrderStep(3)">Proceed</button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Guild Info -->
-                <div id="step-guild" class="step-container">
-                    <div class="glass-card">
-                        <h2 class="text-lg font-bold mb-4">Step 3: Guild Information</h2>
-                        <div class="form-group">
-                            <label>Guild ID *</label>
-                            <input type="text" id="orderGuildId" class="form-control" placeholder="Enter your Free Fire Guild ID" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Guild Name (Optional)</label>
-                            <input type="text" id="orderGuildName" class="form-control" placeholder="Enter Guild Name">
-                        </div>
-                        <div class="form-group">
-                            <label>Contact Number (Optional)</label>
-                            <input type="tel" id="orderContact" class="form-control" placeholder="01XXXXXXXXX">
-                        </div>
-                        <button class="btn btn-primary btn-full mt-4" onclick="nextOrderStep(4)" id="btnStep3Next">Proceed to Payment</button>
-                    </div>
-                </div>
-
-                <!-- Step 4: Payment -->
-                <div id="step-payment" class="step-container">
-                    <div class="glass-card">
-                        <h2 class="text-lg font-bold mb-4">Step 4: Payment Method</h2>
-                        
-                        <div class="pay-method-card" onclick="selectPaymentMethod('wallet')" id="payMethodWallet">
-                            <div class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-2xl"><i class="fas fa-wallet"></i></div>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-sm">Wallet Pay</h4>
-                                <p class="text-xs text-muted">Pay using your account balance</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] text-muted font-bold uppercase">Balance</p>
-                                <p class="font-bold text-primary">৳<span id="orderWalletBalance">0</span></p>
-                            </div>
-                        </div>
-
-                        <div class="pay-method-card" onclick="selectPaymentMethod('instant')" id="payMethodInstant">
-                            <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl"><i class="fas fa-bolt"></i></div>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-sm">Instant Pay</h4>
-                                <p class="text-xs text-muted">Pay via bKash, Nagad, Rocket</p>
-                            </div>
-                        </div>
-
-                        <!-- Instant Pay Details -->
-                        <div id="instantPayDetails" class="hidden mt-6 pt-6 border-t border-gray-100">
-                            <h3 class="font-bold mb-3 text-sm">Select Payment Method</h3>
-                            <div class="grid grid-cols-3 gap-2 mb-4">
-                                <div class="pay-method-card flex-col !p-2 !m-0 text-center" onclick="selectInstantMethod('bkash')" id="instant-bkash">
-                                    <img src="https://i.ibb.co.com/9kCCTNsx/1656227518bkash-logo-png.png" class="!w-12 !h-12 mx-auto">
-                                    <span class="text-[10px] font-bold mt-1">bKash</span>
-                                </div>
-                                <div class="pay-method-card flex-col !p-2 !m-0 text-center" onclick="selectInstantMethod('nagad')" id="instant-nagad">
-                                    <img src="https://i.ibb.co.com/VcqJTvpn/Nagad-Logo-horizontally-og.png" class="!w-12 !h-12 mx-auto">
-                                    <span class="text-[10px] font-bold mt-1">Nagad</span>
-                                </div>
-                                <div class="pay-method-card flex-col !p-2 !m-0 text-center" onclick="selectInstantMethod('rocket')" id="instant-rocket">
-                                    <img src="https://i.ibb.co.com/wFZkNM48/rocket-color-logo-mobile-banking-icon-free-png.png" class="!w-12 !h-12 mx-auto">
-                                    <span class="text-[10px] font-bold mt-1">Rocket</span>
-                                </div>
-                            </div>
-                            <div id="instantForm" class="hidden">
-                                <div class="bg-gray-50 p-4 rounded-xl mb-4 text-center border border-gray-200">
-                                    <p class="text-xs text-muted font-bold mb-1">Send Money To</p>
-                                    <p class="text-xl font-bold font-mono text-primary" id="instantNumber">01XXXXXXXXX</p>
-                                    <button class="btn btn-outline btn-sm mt-2" onclick="copyText('instantNumber')"><i class="fas fa-copy"></i> Copy Number</button>
-                                </div>
-                                <div class="form-group">
-                                    <label>Your Sender Number *</label>
-                                    <input type="tel" id="paySender" class="form-control" placeholder="01XXXXXXXXX">
-                                </div>
-                                <div class="form-group">
-                                    <label>Transaction ID (TrxID) *</label>
-                                    <input type="text" id="payTrxId" class="form-control" placeholder="e.g. 9XX8X6X5X4">
-                                </div>
-                                <button class="btn btn-primary btn-full mt-2" onclick="submitInstantOrder()" id="btnSubmitOrder">Submit Order</button>
-                            </div>
-                        </div>
-
-                        <!-- Wallet Pay Confirm -->
-                        <div id="walletPayDetails" class="hidden mt-6 pt-6 border-t border-gray-100">
-                            <div class="bg-blue-50 p-4 rounded-xl mb-4 text-center border border-blue-200">
-                                <p class="text-xs text-muted font-bold mb-1">Total Price</p>
-                                <p class="text-3xl font-bold text-primary" id="walletPayPrice">৳0</p>
-                                <p class="text-xs font-bold mt-2" id="walletPayStatus"></p>
-                            </div>
-                            <button class="btn btn-primary btn-full" onclick="submitWalletOrder()" id="btnWalletOrder">Confirm & Pay</button>
-                            <button class="btn btn-outline btn-full mt-2 hidden" id="btnAddMoneyRedirect" onclick="showPage('addmoney')">Add Money</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ADD MONEY PAGE -->
-            <div id="page-addmoney" class="page-section">
-                <div class="section-title">Add Money</div>
-                <div class="glass-card">
-                    <div class="bg-blue-50 rounded-xl p-4 text-center mb-6 border border-blue-100">
-                        <p class="text-xs text-muted font-bold uppercase mb-1">Current Balance</p>
-                        <p class="text-3xl font-bold text-primary">৳<span id="addMoneyBalance">0</span></p>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Select Amount (৳)</label>
-                        <div class="grid grid-cols-4 gap-2 mb-3">
-                            <button class="btn btn-outline btn-sm" onclick="setAddMoneyAmt(50)">৳50</button>
-                            <button class="btn btn-outline btn-sm" onclick="setAddMoneyAmt(100)">৳100</button>
-                            <button class="btn btn-outline btn-sm" onclick="setAddMoneyAmt(200)">৳200</button>
-                            <button class="btn btn-outline btn-sm" onclick="setAddMoneyAmt(500)">৳500</button>
-                        </div>
-                        <input type="number" id="addMoneyAmount" class="form-control" placeholder="Enter Custom Amount" min="10">
-                    </div>
-
-                    <h3 class="font-bold text-sm mb-3 mt-6">Select Payment Method</h3>
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <div class="pay-method-card flex-col !p-2 !m-0 text-center" onclick="selectDepositMethod('bkash')" id="dep-bkash">
-                            <img src="https://i.ibb.co.com/9kCCTNsx/1656227518bkash-logo-png.png" class="!w-12 !h-12 mx-auto">
-                            <span class="text-[10px] font-bold mt-1">bKash</span>
-                        </div>
-                        <div class="pay-method-card flex-col !p-2 !m-0 text-center" onclick="selectDepositMethod('nagad')" id="dep-nagad">
-                            <img src="https://i.ibb.co.com/VcqJTvpn/Nagad-Logo-horizontally-og.png" class="!w-12 !h-12 mx-auto">
-                            <span class="text-[10px] font-bold mt-1">Nagad</span>
-                        </div>
-                        <div class="pay-method-card flex-col !p-2 !m-0 text-center" onclick="selectDepositMethod('rocket')" id="dep-rocket">
-                            <img src="https://i.ibb.co.com/wFZkNM48/rocket-color-logo-mobile-banking-icon-free-png.png" class="!w-12 !h-12 mx-auto">
-                            <span class="text-[10px] font-bold mt-1">Rocket</span>
-                        </div>
-                    </div>
-
-                    <div id="depositForm" class="hidden">
-                        <div class="bg-gray-50 p-4 rounded-xl mb-4 text-center border border-gray-200">
-                            <p class="text-xs text-muted font-bold mb-1">Send Money To</p>
-                            <p class="text-xl font-bold font-mono text-primary" id="depositNumber">01XXXXXXXXX</p>
-                            <button class="btn btn-outline btn-sm mt-2" onclick="copyText('depositNumber')"><i class="fas fa-copy"></i> Copy Number</button>
-                        </div>
-                        <div class="form-group">
-                            <label>Your Sender Number *</label>
-                            <input type="tel" id="depSender" class="form-control" placeholder="01XXXXXXXXX">
-                        </div>
-                        <div class="form-group">
-                            <label>Transaction ID (TrxID) *</label>
-                            <input type="text" id="depTrxId" class="form-control" placeholder="e.g. 9XX8X6X5X4">
-                        </div>
-                        <button class="btn btn-primary btn-full mt-2" onclick="submitDeposit()" id="btnSubmitDeposit">Submit Request</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ORDERS PAGE -->
-            <div id="page-orders" class="page-section">
-                <div class="section-title">My Orders</div>
-                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                    <p class="text-xs font-bold text-yellow-800"><i class="fas fa-info-circle"></i> Your order may take 1 to 24 hours to complete. If you do not receive your product within 24 hours, please contact Customer Support.</p>
-                </div>
-                <div id="ordersList">
-                    <!-- Dynamically loaded -->
-                </div>
-            </div>
-
-            <!-- ACCOUNT PAGE -->
-            <div id="page-account" class="page-section">
-                <div class="glass-card text-center pb-6">
-                    <div class="w-20 h-20 rounded-full bg-blue-100 text-primary mx-auto flex items-center justify-center text-3xl font-bold mb-3 overflow-hidden border-4 border-white shadow-lg" id="profileAvatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <h2 class="text-xl font-bold" id="profileName">User</h2>
-                    <p class="text-sm text-muted" id="profileEmail">email@example.com</p>
-                    <p class="text-xs text-muted mt-1" id="profilePhone">01XXXXXXXXX</p>
-                    <div class="mt-4 flex justify-center gap-2">
-                        <button class="btn btn-outline btn-sm" onclick="openEditProfile()"><i class="fas fa-edit"></i> Edit Profile</button>
-                        <button class="btn btn-danger btn-sm" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <h3 class="font-bold mb-4">My Wallet</h3>
-                    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-4 text-white text-center mb-4">
-                        <p class="text-xs opacity-80 font-bold uppercase tracking-wider mb-1">Total Balance</p>
-                        <p class="text-3xl font-bold">৳<span id="accountBalance">0</span></p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button class="btn btn-primary btn-sm" onclick="showPage('addmoney')"><i class="fas fa-plus"></i> Add Money</button>
-                        <button class="btn btn-outline btn-sm" onclick="showPage('orders')"><i class="fas fa-shopping-bag"></i> My Orders</button>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <h3 class="font-bold mb-3">Quick Links</h3>
-                    <div class="flex flex-col gap-2">
-                        <a href="#" onclick="showPage('orders');return false" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"><span class="font-bold text-sm"><i class="fas fa-shopping-bag text-primary w-6"></i> My Orders</span><i class="fas fa-chevron-right text-muted text-xs"></i></a>
-                        <a href="#" onclick="showPage('addmoney');return false" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"><span class="font-bold text-sm"><i class="fas fa-wallet text-primary w-6"></i> Add Money</span><i class="fas fa-chevron-right text-muted text-xs"></i></a>
-                        <a href="#" onclick="showPage('chat');return false" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"><span class="font-bold text-sm"><i class="fas fa-headset text-primary w-6"></i> Live Support</span><i class="fas fa-chevron-right text-muted text-xs"></i></a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CHAT PAGE -->
-            <div id="page-chat" class="page-section">
-                <div class="section-title">Live Support</div>
-                <div class="chat-container">
-                    <div class="chat-header p-4 border-b border-gray-200 bg-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 text-primary flex items-center justify-center text-lg"><i class="fas fa-headset"></i></div>
-                        <div>
-                            <h4 class="font-bold text-sm">Admin Support</h4>
-                            <p class="text-xs text-green-500 font-bold"><i class="fas fa-circle text-[8px]"></i> Online</p>
-                        </div>
-                    </div>
-                    <div class="chat-messages" id="chatMessages">
-                        <!-- Messages injected here -->
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" class="form-control !py-3" placeholder="Type your message...">
-                        <button class="btn btn-primary" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                </div>
-            </div>
-
+        <div class="pay-option" id="pay-instant" onclick="selectPayMethod('instant')">
+          <div class="pay-logo" id="instantLogoBox"></div>
+          <strong>Instant Pay</strong>
+          <small>bKash / Nagad / Rocket</small>
         </div>
-
-        <!-- BOTTOM NAVIGATION -->
-        <nav class="bottom-nav">
-            <a href="#" class="nav-item active" data-page="home" onclick="showPage('home')"><i class="fas fa-home"></i> Home</a>
-            <a href="#" class="nav-item" data-page="packages" onclick="showPage('packages')"><i class="fas fa-gem"></i> Packages</a>
-            <a href="#" class="nav-item" data-page="addmoney" onclick="checkAuth('addmoney')"><i class="fas fa-wallet"></i> Add Money</a>
-            <a href="#" class="nav-item" data-page="orders" onclick="checkAuth('orders')"><i class="fas fa-shopping-bag"></i> Orders</a>
-            <a href="#" class="nav-item" data-page="account" onclick="checkAuth('account')"><i class="fas fa-user"></i> Account</a>
-        </nav>
+      </div>
+      <div class="need-balance"><svg class="ic"><use href="#i-info"/></svg><span>Total Required: <b id="needAmount">0</b>৳</span></div>
+      <button class="btn-primary" onclick="placeOrder()"><i class="fas fa-shopping-cart"></i> Buy Now</button>
     </div>
+  </div>
 
-    <!-- ORDER DETAILS MODAL -->
-    <div id="orderDetailModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Order Details</h2>
-                <button class="modal-close" onclick="closeModal('orderDetailModal')"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" id="orderDetailContent">
-                <!-- Content injected -->
-            </div>
+  <div class="step-card hidden" id="rulesCard">
+    <div class="step-head"><svg class="ic" style="color:var(--accent)"><use href="#i-info"/></svg><h3>Terms & Conditions</h3></div>
+    <div class="step-body">
+      <ol class="rules-list" id="rulesList"></ol>
+    </div>
+  </div>
+</main>
+
+<!-- ORDERS SECTION -->
+<main id="ordersSection" class="page-section hidden">
+  <div class="page-head"><h2>My Orders</h2><p>Track your recent orders</p></div>
+  <div id="ordersList" class="orders-list"></div>
+</main>
+
+<!-- ADD MONEY SECTION -->
+<main id="addmoneySection" class="page-section hidden">
+  <div class="page-head"><h2>Add Money</h2><p>Recharge your wallet</p></div>
+  
+  <div class="step-card" id="amountCard">
+    <div class="step-head"><span class="step-num">৳</span><h3>Enter Amount</h3></div>
+    <div class="step-body">
+      <input class="field-input amount-input" id="depositAmount" type="number" placeholder="0">
+      <div class="quick-amounts">
+        <button onclick="addAmount(100)">+100</button>
+        <button onclick="addAmount(500)">+500</button>
+        <button onclick="addAmount(1000)">+1000</button>
+        <button onclick="addAmount(5000)">+5000</button>
+      </div>
+      <button class="btn-primary" onclick="goToPayment()">Continue <svg class="ic"><use href="#i-arrow"/></svg></button>
+    </div>
+  </div>
+
+  <div class="step-card hidden" id="paymentCard">
+    <button class="back-btn" onclick="backToAmount()"><svg class="ic"><use href="#i-arrow"/></svg>Back</button>
+    <div class="step-head"><span class="step-num">2</span><h3>Select Payment Method</h3></div>
+    <div class="step-body">
+      <div class="pay-methods-row">
+        <div class="pay-method-circle on" id="pm-bkash" onclick="selectDepMethod('bkash')">
+          <div class="check-mark"><svg class="ic"><use href="#i-check"/></svg></div>
+          <div class="pm-logo" id="depLogo-bkash"></div>
+          <span>bKash</span>
         </div>
-    </div>
-
-    <!-- EDIT PROFILE MODAL -->
-    <div id="editProfileModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Edit Profile</h2>
-                <button class="modal-close" onclick="closeModal('editProfileModal')"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Profile Image URL</label>
-                    <input type="text" id="editPic" class="form-control" placeholder="https://...">
-                </div>
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="editName" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="tel" id="editPhone" class="form-control">
-                </div>
-                <button class="btn btn-primary btn-full mt-4" onclick="saveProfile()">Save Changes</button>
-            </div>
+        <div class="pay-method-circle" id="pm-nagad" onclick="selectDepMethod('nagad')">
+          <div class="check-mark"><svg class="ic"><use href="#i-check"/></svg></div>
+          <div class="pm-logo" id="depLogo-nagad"></div>
+          <span>Nagad</span>
         </div>
+        <div class="pay-method-circle" id="pm-rocket" onclick="selectDepMethod('rocket')">
+          <div class="check-mark"><svg class="ic"><use href="#i-check"/></svg></div>
+          <div class="pm-logo" id="depLogo-rocket"></div>
+          <span>Rocket</span>
+        </div>
+      </div>
+
+      <div class="brand-banner" id="brandBanner">
+        <div class="brand-logo" id="selectedBrandLogo"></div>
+        <div class="brand-text"><h3 id="selectedBrandName">bKash</h3><p>Send Money / Payment</p></div>
+      </div>
+
+      <div class="qr-box hidden" id="qrBox"><img id="qrImage" src=""><p>Scan QR to Pay</p></div>
+
+      <div class="receiver-row">
+        <div><small>Send Money To</small><strong id="receiverNumber">01XXXXXXXXX</strong></div>
+        <button class="copy-btn" onclick="copyNumber()"><svg class="ic"><use href="#i-copy"/></svg> Copy</button>
+      </div>
+
+      <div class="instruction-box">
+        <h4><i class="fas fa-list-check"></i> How to Send Money</h4>
+        <ol class="instruction-list" id="instructionList"></ol>
+      </div>
+
+      <label class="field-label">Your Sender Number</label>
+      <input class="field-input mb-2" id="senderNumber" type="tel" maxlength="11" placeholder="01XXXXXXXXX">
+
+      <label class="field-label">Transaction ID (TrxID)</label>
+      <input class="field-input mono mb-2" id="trxId" type="text" placeholder="e.g. 9XX8X6X5X4" style="text-transform:uppercase">
+
+      <button class="btn-primary" id="submitDepositBtn" onclick="submitDeposit()">Verify & Submit</button>
     </div>
-
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        // ═══════════════ FIREBASE CONFIG ═══════════════
-        const firebaseConfig = {
-            apiKey: "AIzaSyAA6lc6-CFTn56ApNnnATiMUheDpqCaSkQ",
-            authDomain: "sm-topup-f5ae0.firebaseapp.com",
-            projectId: "sm-topup-f5ae0",
-            storageBucket: "sm-topup-f5ae0.firebasestorage.app",
-            messagingSenderId: "27891330556",
-            appId: "1:27891330556:web:844ca508cdc734caacd679"
-        };
-
-        let db, auth;
-        try {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            auth = firebase.auth();
-        } catch (e) { console.error("Firebase init error", e); }
-
-        // ═══════════════ STATE & UTILS ═══════════════
-        const $ = (id) => document.getElementById(id);
-        const esc = (str) => String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        
-        let currentUser = null;
-        let userData = {};
-        let globalSettings = {};
-        let packagesList = [], serversList = [], bannersList = [], tutorialsList = [], chatUnsub = null;
-        
-        // Order Flow State
-        let currentOrderPkg = null;
-        let currentOrderServer = null;
-        let currentOrderPaymentMethod = 'wallet';
-        let currentInstantMethod = 'bkash';
-        let selectedDepositMethod = 'bkash';
-        let pendingAction = null;
-
-        // Utils
-        function toast(msg, type = 'success') {
-            const container = $('toastContainer') || document.createElement('div');
-            container.id = 'toastContainer';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-            
-            const el = document.createElement('div');
-            el.className = `toast ${type}`;
-            el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
-            container.appendChild(el);
-            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
-        }
-
-        function copyText(id) {
-            const el = $(id);
-            if(!el) return;
-            const text = el.textContent || el.value;
-            navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard!'));
-        }
-
-        function openModal(id) { $(id).classList.add('active'); }
-        function closeModal(id) { $(id).classList.remove('active'); }
-
-        function showPage(pageId) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            const target = $('page-' + pageId);
-            if (target) target.classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active');
-                if(el.dataset.page === pageId) el.classList.add('active');
-            });
-            window.scrollTo(0, 0);
-
-            if (pageId === 'chat') initChat();
-            if (pageId === 'orders') loadOrders();
-            if (pageId === 'account') loadAccount();
-        }
-
-        // ═══════════════ AUTHENTICATION ═══════════════
-        auth.onAuthStateChanged(user => {
-            // Hide splash
-            setTimeout(() => {
-                $('splashScreen').style.opacity = '0';
-                setTimeout(() => $('splashScreen').style.display = 'none', 500);
-            }, 1000);
-
-            if (user) {
-                currentUser = user;
-                $('authPage').classList.remove('active');
-                $('mainApp').classList.remove('hidden');
-                
-                // Fetch user data
-                db.collection('users').doc(user.uid).onSnapshot(doc => {
-                    if (doc.exists) {
-                        userData = doc.data();
-                        $('headerBalance').textContent = userData.balance || 0;
-                        $('addMoneyBalance').textContent = userData.balance || 0;
-                        $('orderWalletBalance').textContent = userData.balance || 0;
-                        $('accountBalance').textContent = userData.balance || 0;
-                        
-                        const initial = (userData.name || 'U').charAt(0).toUpperCase();
-                        $('headerAvatar').innerHTML = userData.profilePic ? `<img src="${esc(userData.profilePic)}">` : initial;
-                        $('profileAvatar').innerHTML = userData.profilePic ? `<img src="${esc(userData.profilePic)}" class="w-full h-full object-cover">` : initial;
-                        $('profileName').textContent = userData.name || 'User';
-                        $('profileEmail').textContent = userData.email || user.email;
-                        $('profilePhone').textContent = userData.phone || '';
-                    }
-                });
-
-                if (pendingAction) {
-                    const act = pendingAction;
-                    pendingAction = null;
-                    showPage(act);
-                }
-            } else {
-                currentUser = null;
-                userData = {};
-                $('headerBalance').textContent = '0';
-                $('headerAvatar').innerHTML = '<i class="fas fa-user"></i>';
-            }
-        });
-
-        function checkAuth(action) {
-            if (currentUser) {
-                showPage(action);
-            } else {
-                pendingAction = action;
-                $('authPage').classList.add('active');
-            }
-        }
-
-        function closeAuth() { $('authPage').classList.remove('active'); }
-
-        function switchAuthTab(tab) {
-            $('tabLogin').classList.toggle('active', tab === 'login');
-            $('tabRegister').classList.toggle('active', tab === 'register');
-            $('loginForm').classList.toggle('hidden', tab !== 'login');
-            $('registerForm').classList.toggle('hidden', tab !== 'register');
-        }
-
-        async function handleLogin() {
-            const email = $('loginEmail').value.trim();
-            const pass = $('loginPass').value;
-            const btn = $('btnLogin');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-            btn.disabled = true;
-
-            try {
-                await auth.signInWithEmailAndPassword(email, pass);
-                toast('Welcome back!');
-            } catch (e) {
-                Swal.fire('Error', e.message, 'error');
-            } finally {
-                btn.innerHTML = 'Sign In';
-                btn.disabled = false;
-            }
-        }
-
-        async function handleRegister() {
-            const name = $('regName').value.trim();
-            const email = $('regEmail').value.trim();
-            const phone = $('regPhone').value.trim();
-            const pass = $('regPass').value;
-            const btn = $('btnRegister');
-            
-            if(!name || !email || !phone || !pass) return toast('All fields are required', 'error');
-            if(pass.length < 6) return toast('Password must be at least 6 characters', 'error');
-
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-            btn.disabled = true;
-
-            try {
-                const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                await db.collection('users').doc(cred.user.uid).set({
-                    name, email, phone, balance: 0, totalOrders: 0, totalSpend: 0, createdAt: new Date()
-                });
-                toast('Account created successfully!');
-            } catch (e) {
-                Swal.fire('Error', e.message, 'error');
-            } finally {
-                btn.innerHTML = 'Create Account';
-                btn.disabled = false;
-            }
-        }
-
-        function handleLogout() {
-            Swal.fire({ title: 'Logout?', text: 'Are you sure you want to sign out?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes' })
-                .then(res => { if (res.isConfirmed) auth.signOut(); });
-        }
-
-        async function handleForgotPassword() {
-            const email = $('loginEmail').value.trim();
-            if(!email) return toast('Enter your email address first', 'error');
-            try {
-                await auth.sendPasswordResetEmail(email);
-                Swal.fire('Email Sent', 'Check your inbox for password reset link.', 'success');
-            } catch (e) {
-                Swal.fire('Error', e.message, 'error');
-            }
-        }
-
-        // ═══════════════ INIT DATA ═══════════════
-        function initData() {
-            // Settings
-            db.collection('settings').doc('general').onSnapshot(doc => {
-                if(doc.exists) {
-                    globalSettings = doc.data();
-                    if(globalSettings.logoUrl) { $('headerLogo').src = globalSettings.logoUrl; $('authLogo').src = globalSettings.logoUrl; }
-                    if(globalSettings.siteName) { $('headerSiteName').textContent = globalSettings.siteName; document.title = globalSettings.siteName; }
-                }
-            });
-
-            // Banners
-            db.collection('banners').where('active', '==', true).onSnapshot(snap => {
-                bannersList = [];
-                snap.forEach(d => bannersList.push({ id: d.id, ...d.data() }));
-                renderBanners();
-            });
-
-            // Packages
-            db.collection('packages').where('active', '==', true).orderBy('order', 'asc').onSnapshot(snap => {
-                packagesList = [];
-                snap.forEach(d => packagesList.push({ id: d.id, ...d.data() }));
-                renderPackages();
-            });
-
-            // Servers
-            db.collection('servers').where('active', '==', true).orderBy('position', 'asc').onSnapshot(snap => {
-                serversList = [];
-                snap.forEach(d => serversList.push({ id: d.id, ...d.data() }));
-                renderServers();
-            });
-
-            // Tutorials
-            db.collection('tutorials').where('active', '==', true).onSnapshot(snap => {
-                tutorialsList = [];
-                snap.forEach(d => tutorialsList.push({ id: d.id, ...d.data() }));
-                renderTutorials();
-            });
-
-            // Social
-            db.collection('settings').doc('social').onSnapshot(doc => {
-                if(doc.exists) renderSocial(doc.data());
-            });
-
-            // Payments Setup
-            db.collection('settings').doc('payments').get().then(doc => {
-                if(doc.exists) {
-                    const p = doc.data();
-                    if(p.bkash) {
-                        $('instant-bkash').querySelector('img').src = p.bkash.logo || 'https://i.ibb.co.com/9kCCTNsx/1656227518bkash-logo-png.png';
-                        $('dep-bkash').querySelector('img').src = p.bkash.logo || 'https://i.ibb.co.com/9kCCTNsx/1656227518bkash-logo-png.png';
-                    }
-                    if(p.nagad) {
-                        $('instant-nagad').querySelector('img').src = p.nagad.logo || 'https://i.ibb.co.com/VcqJTvpn/Nagad-Logo-horizontally-og.png';
-                        $('dep-nagad').querySelector('img').src = p.nagad.logo || 'https://i.ibb.co.com/VcqJTvpn/Nagad-Logo-horizontally-og.png';
-                    }
-                    if(p.rocket) {
-                        $('instant-rocket').querySelector('img').src = p.rocket.logo || 'https://i.ibb.co.com/wFZkNM48/rocket-color-logo-mobile-banking-icon-free-png.png';
-                        $('dep-rocket').querySelector('img').src = p.rocket.logo || 'https://i.ibb.co.com/wFZkNM48/rocket-color-logo-mobile-banking-icon-free-png.png';
-                    }
-                }
-            });
-        }
-        initData();
-
-        // ═══════════════ RENDER: HOME ═══════════════
-        let bannerIndex = 0;
-        let bannerInterval;
-        function renderBanners() {
-            const track = $('bannerTrack');
-            const dots = $('bannerDots');
-            if(bannersList.length === 0) {
-                track.innerHTML = `<div class="banner-slide"><img src="https://via.placeholder.com/800x400?text=GLORY+X+BD" /></div>`;
-                return;
-            }
-
-            track.innerHTML = bannersList.map(b => `
-                <div class="banner-slide" onclick="if('${b.url}') window.open('${b.url}','_blank')">
-                    <img src="${esc(b.image)}" onerror="this.src='https://via.placeholder.com/800x400?text=GLORY+X+BD'">
-                </div>
-            `).join('');
-
-            dots.innerHTML = bannersList.map((_, i) => `<div class="banner-dot ${i===0?'active':''}" onclick="goBanner(${i})"></div>`).join('');
-            
-            bannerIndex = 0;
-            clearInterval(bannerInterval);
-            if(bannersList.length > 1) {
-                bannerInterval = setInterval(() => {
-                    bannerIndex = (bannerIndex + 1) % bannersList.length;
-                    updateBannerPos();
-                }, 4000);
-            }
-        }
-
-        function updateBannerPos() {
-            $('bannerTrack').style.transform = `translateX(-${bannerIndex * 100}%)`;
-            document.querySelectorAll('.banner-dot').forEach((d, i) => d.classList.toggle('active', i === bannerIndex));
-        }
-
-        function goBanner(i) {
-            bannerIndex = i;
-            updateBannerPos();
-        }
-
-        // Touch swipe for banner
-        let touchStartX = 0;
-        $('bannerContainer')?.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX, {passive:true});
-        $('bannerContainer')?.addEventListener('touchend', e => {
-            const dx = e.changedTouches[0].clientX - touchStartX;
-            if(Math.abs(dx) > 40) {
-                if(dx > 0) bannerIndex = (bannerIndex - 1 + bannersList.length) % bannersList.length;
-                else bannerIndex = (bannerIndex + 1) % bannersList.length;
-                updateBannerPos();
-            }
-        }, {passive:true});
-
-        function renderPackages() {
-            const grids = [$('homePackagesGrid'), $('allPackagesGrid')];
-            let html = '';
-            if(packagesList.length === 0) html = '<div class="col-span-full text-center py-8 text-muted">No packages available right now.</div>';
-            else {
-                html = packagesList.map(p => `
-                    <div class="pkg-card" onclick="startOrder('${p.id}')">
-                        ${p.badge ? `<div class="pkg-badge">${esc(p.badge)}</div>` : ''}
-                        <img src="${esc(p.image || 'https://files.catbox.moe/h4zlba.ico')}" class="pkg-img" onerror="this.src='https://files.catbox.moe/h4zlba.ico'">
-                        <div class="pkg-info">
-                            <div class="pkg-name">${esc(p.name)}</div>
-                            <div class="pkg-price">৳${p.price}</div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            grids.forEach(g => { if(g) g.innerHTML = html; });
-        }
-
-        function renderServers() {
-            const container = $('serverList');
-            if(serversList.length === 0) { container.innerHTML = '<div class="text-center text-muted py-4">No servers configured.</div>'; return; }
-            container.innerHTML = serversList.map(s => `
-                <div class="server-option" onclick="selectServer('${s.id}')" id="srv-${s.id}">
-                    <img src="${esc(s.logo || 'https://files.catbox.moe/h4zlba.ico')}" onerror="this.src='https://files.catbox.moe/h4zlba.ico'">
-                    <div class="flex-1"><h4 class="font-bold text-sm">${esc(s.name)}</h4><p class="text-xs text-muted">${esc(s.desc || '')}</p></div>
-                </div>
-            `).join('');
-        }
-
-        function renderTutorials() {
-            const grid = $('tutorialsGrid');
-            if(tutorialsList.length === 0) { grid.innerHTML = '<div class="text-center text-muted py-4">No tutorials added yet.</div>'; return; }
-            
-            grid.innerHTML = tutorialsList.map(t => {
-                if(t.type === 'video') {
-                    return `
-                        <div class="glass-card mb-0 cursor-pointer" onclick="openVideoTutorial('${esc(t.videoUrl)}')">
-                            <div class="relative rounded-lg overflow-hidden mb-3">
-                                <img src="${esc(t.thumbnail || 'https://via.placeholder.com/400x200')}" class="w-full h-40 object-cover">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-xl"><i class="fas fa-play"></i></div>
-                                </div>
-                            </div>
-                            <h3 class="font-bold text-md">${esc(t.title)}</h3>
-                            <p class="text-xs text-muted mt-1">${esc(t.desc || '')}</p>
-                        </div>
-                    `;
-                } else {
-                    return `
-                        <div class="glass-card mb-0 cursor-pointer" onclick="if('${esc(t.destUrl)}') window.open('${esc(t.destUrl)}','_blank')">
-                            <img src="${esc(t.image)}" class="w-full h-40 object-cover rounded-lg mb-3">
-                            <h3 class="font-bold text-md">${esc(t.title)}</h3>
-                        </div>
-                    `;
-                }
-            }).join('');
-        }
-
-        function openVideoTutorial(url) {
-            if(!url) return;
-            Swal.fire({ html: `<div class="aspect-video w-full"><iframe src="${url}" frameborder="0" allowfullscreen class="w-full h-full rounded-xl"></iframe></div>`, showConfirmButton: false, showCloseButton: true, width: 800 });
-        }
-
-        function renderSocial(soc) {
-            const grid = $('socialLinksGrid');
-            const links = [
-                { key: 'facebook', icon: 'fab fa-facebook', color: '#1877F2' },
-                { key: 'whatsapp', icon: 'fab fa-whatsapp', color: '#25D366' },
-                { key: 'telegram', icon: 'fab fa-telegram', color: '#0088CC' },
-                { key: 'youtube', icon: 'fab fa-youtube', color: '#FF0000' },
-                { key: 'instagram', icon: 'fab fa-instagram', color: '#E4405F' },
-                { key: 'discord', icon: 'fab fa-discord', color: '#5865F2' }
-            ];
-            let html = '';
-            links.forEach(l => {
-                if(soc[l.key]) {
-                    html += `<a href="${esc(soc[l.key])}" target="_blank" style="width:48px;height:48px;border-radius:50%;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:20px;color:${l.color};transition:0.2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><i class="${l.icon}"></i></a>`;
-                }
-            });
-            grid.innerHTML = html || '<p class="text-muted text-sm w-full text-center">No social links added.</p>';
-        }
-
-        // ═══════════════ ORDER FLOW ═══════════════
-        function startOrder(pkgId) {
-            if(!currentUser) { checkAuth('packages'); return; }
-            const pkg = packagesList.find(p => p.id === pkgId);
-            if(!pkg) return;
-            
-            currentOrderPkg = pkg;
-            currentOrderServer = null;
-            
-            // Reset steps
-            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
-            $('step-server').classList.add('active');
-            
-            // Reset UI
-            document.querySelectorAll('.server-option').forEach(el => el.classList.remove('selected'));
-            $('btnStep1Next').disabled = true;
-            $('orderGuildId').value = '';
-            
-            // Load package info
-            $('orderPkgImg').src = pkg.image || 'https://files.catbox.moe/h4zlba.ico';
-            $('orderPkgName').textContent = pkg.name;
-            $('orderPkgQty').textContent = `${pkg.gloryQty} Glory`;
-            $('orderPkgPrice').textContent = `৳${pkg.price}`;
-            
-            showPage('order');
-        }
-
-        function selectServer(id) {
-            currentOrderServer = serversList.find(s => s.id === id);
-            document.querySelectorAll('.server-option').forEach(el => el.classList.remove('selected'));
-            $('srv-' + id).classList.add('selected');
-            $('btnStep1Next').disabled = false;
-        }
-
-        function nextOrderStep(step) {
-            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
-            $('step-' + (step === 2 ? 'package' : step === 3 ? 'guild' : 'payment')).classList.add('active');
-            
-            if (step === 4) {
-                // Update wallet balance display
-                $('orderWalletBalance').textContent = userData.balance || 0;
-                $('walletPayPrice').textContent = `৳${currentOrderPkg.price}`;
-                const hasBal = (userData.balance || 0) >= currentOrderPkg.price;
-                $('walletPayStatus').innerHTML = hasBal 
-                    ? `<span class="text-green-600"><i class="fas fa-check-circle"></i> Sufficient Balance</span>`
-                    : `<span class="text-red-600"><i class="fas fa-times-circle"></i> Insufficient Balance</span>`;
-                $('btnWalletOrder').disabled = !hasBal;
-                $('btnAddMoneyRedirect').classList.toggle('hidden', hasBal);
-                
-                selectPaymentMethod('wallet'); // Default
-            }
-        }
-
-        function selectPaymentMethod(method) {
-            currentOrderPaymentMethod = method;
-            $('payMethodWallet').classList.toggle('selected', method === 'wallet');
-            $('payMethodInstant').classList.toggle('selected', method === 'instant');
-            
-            $('walletPayDetails').classList.toggle('hidden', method !== 'wallet');
-            $('instantPayDetails').classList.toggle('hidden', method !== 'instant');
-        }
-
-        function selectInstantMethod(method) {
-            currentInstantMethod = method;
-            document.querySelectorAll('#instantPayDetails .pay-method-card').forEach(el => el.classList.remove('selected'));
-            $('instant-' + method).classList.add('selected');
-            $('instantForm').classList.remove('hidden');
-            
-            // Load number from settings
-            db.collection('settings').doc('payments').get().then(doc => {
-                const p = doc.data() || {};
-                const m = p[method] || {};
-                $('instantNumber').textContent = m.number || '01XXXXXXXXX';
-            });
-        }
-
-        async function submitInstantOrder() {
-            const sender = $('paySender').value.trim();
-            const trx = $('payTrxId').value.trim();
-            const guildId = $('orderGuildId').value.trim();
-            const guildName = $('orderGuildName').value.trim();
-            const contact = $('orderContact').value.trim();
-            
-            if(!sender || !trx) return toast('Sender number and TrxID are required', 'error');
-            if(!guildId) return toast('Guild ID is required', 'error');
-
-            const btn = $('btnSubmitOrder');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-            btn.disabled = true;
-
-            try {
-                // Check duplicate trxid
-                const dup = await db.collection('orders').where('trxId', '==', trx).get();
-                if(!dup.empty) throw new Error('This Transaction ID has already been used!');
-
-                const orderData = {
-                    userId: currentUser.uid,
-                    userName: userData.name || currentUser.email,
-                    userEmail: currentUser.email,
-                    packageId: currentOrderPkg.id,
-                    packageName: currentOrderPkg.name,
-                    gloryQty: currentOrderPkg.gloryQty,
-                    price: currentOrderPkg.price,
-                    server: currentOrderServer.name,
-                    playerId: guildId, // Using playerId for guildId
-                    guildName: guildName,
-                    contact: contact,
-                    paymentType: 'instant',
-                    paymentMethod: currentInstantMethod,
-                    senderNumber: sender,
-                    trxId: trx,
-                    status: 'pending',
-                    date: new Date()
-                };
-
-                await db.collection('orders').add(orderData);
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Order Submitted!',
-                    text: 'Admin will verify your payment shortly.',
-                    confirmButtonText: 'View My Orders'
-                }).then(res => {
-                    if(res.isConfirmed) showPage('orders');
-                });
-                
-                // Reset forms
-                $('paySender').value = ''; $('payTrxId').value = ''; $('orderGuildId').value = '';
-
-            } catch(e) {
-                toast(e.message, 'error');
-            } finally {
-                btn.innerHTML = 'Submit Order';
-                btn.disabled = false;
-            }
-        }
-
-        async function submitWalletOrder() {
-            const guildId = $('orderGuildId').value.trim();
-            if(!guildId) return toast('Guild ID is required', 'error');
-
-            const confirm = await Swal.fire({
-                title: 'Confirm Payment?',
-                html: `You are paying <b>৳${currentOrderPkg.price}</b> from your wallet.`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Pay'
-            });
-            if(!confirm.isConfirmed) return;
-
-            const btn = $('btnWalletOrder');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            btn.disabled = true;
-
-            try {
-                await db.runTransaction(async (transaction) => {
-                    const userRef = db.collection('users').doc(currentUser.uid);
-                    const userDoc = await transaction.get(userRef);
-                    
-                    if (!userDoc.exists) throw "User does not exist!";
-                    const currentBal = userDoc.data().balance || 0;
-                    
-                    if (currentBal < currentOrderPkg.price) throw "Insufficient wallet balance!";
-
-                    const newBal = currentBal - currentOrderPkg.price;
-                    transaction.update(userRef, { balance: newBal });
-
-                    const orderRef = db.collection('orders').doc();
-                    transaction.set(orderRef, {
-                        userId: currentUser.uid,
-                        userName: userData.name || currentUser.email,
-                        userEmail: currentUser.email,
-                        packageId: currentOrderPkg.id,
-                        packageName: currentOrderPkg.name,
-                        gloryQty: currentOrderPkg.gloryQty,
-                        price: currentOrderPkg.price,
-                        server: currentOrderServer.name,
-                        playerId: guildId,
-                        guildName: $('orderGuildName').value.trim(),
-                        contact: $('orderContact').value.trim(),
-                        paymentType: 'wallet',
-                        paymentMethod: 'wallet',
-                        status: 'pending',
-                        date: new Date()
-                    });
-                });
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Order Placed!',
-                    text: 'Your order has been placed successfully.',
-                    confirmButtonText: 'View My Orders'
-                }).then(res => {
-                    if(res.isConfirmed) showPage('orders');
-                });
-
-            } catch(e) {
-                toast(e.toString(), 'error');
-            } finally {
-                btn.innerHTML = 'Confirm & Pay';
-                btn.disabled = false;
-            }
-        }
-
-        // ═══════════════ ADD MONEY ═══════════════
-        function setAddMoneyAmt(amt) {
-            $('addMoneyAmount').value = amt;
-        }
-
-        function selectDepositMethod(method) {
-            selectedDepositMethod = method;
-            document.querySelectorAll('#page-addmoney .pay-method-card').forEach(el => el.classList.remove('selected'));
-            $('dep-' + method).classList.add('selected');
-            $('depositForm').classList.remove('hidden');
-
-            db.collection('settings').doc('payments').get().then(doc => {
-                const p = doc.data() || {};
-                const m = p[method] || {};
-                $('depositNumber').textContent = m.number || '01XXXXXXXXX';
-            });
-        }
-
-        async function submitDeposit() {
-            const amt = parseInt($('addMoneyAmount').value);
-            const sender = $('depSender').value.trim();
-            const trx = $('depTrxId').value.trim();
-
-            if(!amt || amt < 10) return toast('Minimum add money is ৳10', 'error');
-            if(!sender || !trx) return toast('Sender and TrxID are required', 'error');
-
-            const btn = $('btnSubmitDeposit');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-            btn.disabled = true;
-
-            try {
-                const dup = await db.collection('add_money').where('trxId', '==', trx).get();
-                if(!dup.empty) throw new Error('This Transaction ID has already been used!');
-
-                await db.collection('add_money').add({
-                    userId: currentUser.uid,
-                    userName: userData.name || currentUser.email,
-                    userEmail: currentUser.email,
-                    amount: amt,
-                    method: selectedDepositMethod,
-                    senderNumber: sender,
-                    trxId: trx,
-                    status: 'pending',
-                    date: new Date()
-                });
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Request Submitted',
-                    text: 'Admin will verify and add balance soon.',
-                });
-                
-                $('addMoneyAmount').value = ''; $('depSender').value = ''; $('depTrxId').value = '';
-                $('depositForm').classList.add('hidden');
-                showPage('home');
-
-            } catch(e) {
-                toast(e.message, 'error');
-            } finally {
-                btn.innerHTML = 'Submit Request';
-                btn.disabled = false;
-            }
-        }
-
-        // ═══════════════ MY ORDERS ═══════════════
-        function loadOrders() {
-            const cont = $('ordersList');
-            cont.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-primary text-2xl"></i></div>';
-            
-            db.collection('orders').where('userId', '==', currentUser.uid).orderBy('date', 'desc').onSnapshot(snap => {
-                if(snap.empty) { cont.innerHTML = '<div class="text-center py-8 text-muted">No orders found.</div>'; return; }
-                
-                let html = '';
-                snap.forEach(doc => {
-                    const o = doc.data();
-                    let badgeCls = 'status-pending';
-                    if(o.status === 'completed') badgeCls = 'status-completed';
-                    if(['rejected','refunded'].includes(o.status)) badgeCls = 'status-rejected';
-                    
-                    const dateStr = o.date?.toDate ? o.date.toDate().toLocaleDateString() : 'Just now';
-                    
-                    html += `
-                        <div class="order-item" onclick="viewOrder('${doc.id}')">
-                            <div class="order-header">
-                                <div><p class="text-xs text-muted font-bold">Order ID</p><p class="font-mono text-xs font-bold">#${doc.id.slice(-6).toUpperCase()}</p></div>
-                                <span class="order-status ${badgeCls}">${o.status}</span>
-                            </div>
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary flex items-center justify-center text-lg"><i class="fas fa-gem"></i></div>
-                                <div><h4 class="font-bold text-sm">${esc(o.packageName)}</h4><p class="text-xs text-muted">${o.gloryQty} Glory • ${esc(o.server)}</p></div>
-                            </div>
-                            <div class="order-row"><span>Amount</span><span class="text-primary">৳${o.price}</span></div>
-                            <div class="order-row"><span>Date</span><span class="text-xs">${dateStr}</span></div>
-                        </div>
-                    `;
-                });
-                cont.innerHTML = html;
-            });
-        }
-
-        function viewOrder(id) {
-            db.collection('orders').doc(id).get().then(doc => {
-                if(!doc.exists) return;
-                const o = doc.data();
-                $('orderDetailContent').innerHTML = `
-                    <div class="space-y-3">
-                        <div class="bg-gray-50 p-4 rounded-xl">
-                            <p class="text-xs font-bold text-muted mb-1">Order Info</p>
-                            <div class="flex justify-between py-1 text-sm"><span class="text-muted">Package</span><span class="font-bold">${esc(o.packageName)}</span></div>
-                            <div class="flex justify-between py-1 text-sm"><span class="text-muted">Glory Qty</span><span class="font-bold">${o.gloryQty}</span></div>
-                            <div class="flex justify-between py-1 text-sm"><span class="text-muted">Server</span><span class="font-bold">${esc(o.server)}</span></div>
-                            <div class="flex justify-between py-1 text-sm"><span class="text-muted">Guild ID</span><span class="font-bold">${esc(o.playerId)}</span></div>
-                            <div class="flex justify-between py-1 text-sm"><span class="text-muted">Amount</span><span class="font-bold text-primary">৳${o.price}</span></div>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-xl">
-                            <p class="text-xs font-bold text-muted mb-1">Payment Info</p>
-                            <div class="flex justify-between py-1 text-sm"><span class="text-muted">Method</span><span class="font-bold">${esc(o.paymentMethod || 'Wallet')}</span></div>
-                            ${o.trxId ? `<div class="flex justify-between py-1 text-sm"><span class="text-muted">TrxID</span><span class="font-bold font-mono">${esc(o.trxId)}</span></div>` : ''}
-                        </div>
-                        <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                            <p class="text-xs text-yellow-800 font-bold">Status: <span class="uppercase">${o.status}</span></p>
-                            <p class="text-xs text-yellow-700 mt-1">Order may take 1-24 hours to process.</p>
-                        </div>
-                    </div>
-                `;
-                openModal('orderDetailModal');
-            });
-        }
-
-        // ═══════════════ ACCOUNT ═══════════════
-        function loadAccount() {
-            if(!userData) return;
-            $('accountBalance').textContent = userData.balance || 0;
-        }
-
-        function openEditProfile() {
-            if(!userData) return;
-            $('editName').value = userData.name || '';
-            $('editPhone').value = userData.phone || '';
-            $('editPic').value = userData.profilePic || '';
-            openModal('editProfileModal');
-        }
-
-        async function saveProfile() {
-            const name = $('editName').value.trim();
-            const phone = $('editPhone').value.trim();
-            const pic = $('editPic').value.trim();
-            if(!name) return toast('Name is required', 'error');
-
-            try {
-                await db.collection('users').doc(currentUser.uid).update({ name, phone, profilePic: pic });
-                toast('Profile updated!');
-                closeModal('editProfileModal');
-            } catch(e) { toast(e.message, 'error'); }
-        }
-
-        // ═══════════════ LIVE CHAT ═══════════════
-        function initChat() {
-            if(!currentUser) return;
-            const cont = $('chatMessages');
-            cont.innerHTML = '<div class="text-center text-muted text-sm py-4">Connecting to support...</div>';
-
-            // Find or create chat doc
-            db.collection('chats').where('userId', '==', currentUser.uid).get().then(snap => {
-                let chatId;
-                if(snap.empty) {
-                    const ref = db.collection('chats').doc();
-                    ref.set({ userId: currentUser.uid, userName: userData.name || currentUser.email, lastMessage: '', updatedAt: new Date() });
-                    chatId = ref.id;
-                } else {
-                    chatId = snap.docs[0].id;
-                }
-
-                if(chatUnsub) chatUnsub();
-                chatUnsub = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'asc').onSnapshot(msgs => {
-                    if(msgs.empty) { cont.innerHTML = '<div class="text-center text-muted text-sm py-4">Start the conversation...</div>'; return; }
-                    let html = '';
-                    msgs.forEach(m => {
-                        const data = m.data();
-                        html += `<div class="chat-msg ${data.sender === 'user' ? 'user' : 'admin'}">${esc(data.text)}</div>`;
-                    });
-                    cont.innerHTML = html;
-                    cont.scrollTop = cont.scrollHeight;
-                });
-                
-                $('chatInput').dataset.chatId = chatId;
-            });
-        }
-
-        async function sendMessage() {
-            const input = $('chatInput');
-            const text = input.value.trim();
-            const chatId = input.dataset.chatId;
-            if(!text || !chatId) return;
-
-            input.value = '';
-            await db.collection('chats').doc(chatId).collection('messages').add({
-                text, sender: 'user', timestamp: new Date()
-            });
-            await db.collection('chats').doc(chatId).update({
-                lastMessage: text, updatedAt: new Date()
-            });
-        }
-
-    </script>
+  </div>
+</main>
+
+<!-- PROMOTION SECTION -->
+<main id="promotionSection" class="page-section hidden">
+  <div class="page-head"><h2>Promotions</h2><p>Exclusive offers & announcements</p></div>
+  <div class="promo-slider">
+    <div class="promo-slider-track" id="promoSliderTrack"></div>
+    <div class="promo-slider-dots" id="promoSliderDots"></div>
+  </div>
+  <div id="promotionList" class="promotion-list"></div>
+</main>
+
+<!-- ACCOUNT SECTION -->
+<main id="accountSection" class="page-section hidden">
+  <div class="account-hero">
+    <div class="account-avatar" id="accountAvatar">U</div>
+    <h2 id="accountName">User</h2>
+    <p id="accountEmail">user@example.com</p>
+  </div>
+
+  <div class="push-banner hidden" id="pushBanner">
+    <div class="push-icon"><svg class="ic"><use href="#i-bell"/></svg></div>
+    <div class="push-text">
+      <strong>Enable Notifications</strong>
+      <small>Get order updates & exclusive offers</small>
+    </div>
+    <button class="push-btn" onclick="enablePushNotifications()">Enable</button>
+    <button class="push-close" onclick="dismissPushBanner()"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+
+  <div class="account-stats">
+    <div class="acc-stat"><small>Total Orders</small><b id="accOrders">0</b></div>
+    <div class="acc-stat"><small>Total Spent</small><b id="accSpent">0৳</b></div>
+    <div class="acc-stat"><small>Weekly Spend</small><b id="accWeekly">0৳</b></div>
+    <div class="acc-stat"><small>Wallet Balance</small><b id="accBalance">0৳</b></div>
+  </div>
+
+  <div class="account-actions">
+    <button class="btn-primary" onclick="goSection('addmoney')"><svg class="ic"><use href="#i-plus"/></svg> Add Money</button>
+    <button class="btn-outline" onclick="openEditProfile()"><svg class="ic"><use href="#i-edit"/></svg> Edit Profile</button>
+  </div>
+  <button class="btn-outline mb-2" style="height:48px;justify-content:flex-start;padding:0 16px;color:var(--text)" onclick="goSection('codes')">
+    <svg class="ic" style="margin-right:8px"><use href="#i-ticket"/></svg> My Redeem Codes
+  </button>
+  <button class="logout-btn" onclick="doLogout()"><svg class="ic"><use href="#i-logout"/></svg> Log Out</button>
+</main>
+
+<!-- CODES SECTION -->
+<main id="codesSection" class="page-section hidden">
+  <button class="back-btn" onclick="goSection('account')"><svg class="ic"><use href="#i-arrow"/></svg>Back to Account</button>
+  <div class="page-head"><h2>My Codes</h2><p>Your redeemed codes</p></div>
+  <div id="codesList" class="orders-list"></div>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item on" data-nav="home" onclick="goSection('home')"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></button>
+  <button class="nav-item" data-nav="orders" onclick="goSection('orders')"><svg class="ic"><use href="#i-bag"/></svg><span>Orders</span></button>
+  <button class="nav-item nav-add" onclick="goSection('addmoney')"><span class="nav-add-btn"><svg class="ic"><use href="#i-plus"/></svg></span><span>Add Money</span></button>
+  <button class="nav-item" data-nav="promotion" onclick="goSection('promotion')"><svg class="ic"><use href="#i-gift"/></svg><span>Promo</span></button>
+  <button class="nav-item" data-nav="account" onclick="goSection('account')"><svg class="ic"><use href="#i-user"/></svg><span>Account</span></button>
+</nav>
+
+</div>
+
+<!-- ADMIN POPUP -->
+<div class="popup-overlay hidden" id="adminPopup">
+  <div class="popup-card">
+    <button class="popup-close" onclick="closeAdminPopup()" aria-label="Close">
+      <svg class="ic"><use href="#i-x"/></svg>
+    </button>
+    <div class="popup-image hidden" id="popupImageWrap">
+      <img id="popupImage" src="" alt="">
+    </div>
+    <div class="popup-body">
+      <h2 class="popup-title" id="popupTitle">Announcement</h2>
+      <p class="popup-text" id="popupText"></p>
+      <button class="popup-btn" id="popupBtn" onclick="popupAction()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay hidden" id="loginModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Welcome to GLORY X BD</h3>
+      <button class="modal-close" onclick="closeLogin()"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="tabLogin" onclick="switchAuth('login')">Login</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuth('register')">Register</button>
+      </div>
+      <button class="google-btn" onclick="handleGoogleLogin()">
+        <svg class="ic" style="font-size:20px;stroke:none"><use href="#i-google"/></svg>
+        Continue with Google
+      </button>
+      <div class="divider"><span>OR</span></div>
+      <div id="loginForm">
+        <input class="field-input mb-2" id="loginEmail" type="email" placeholder="Email Address">
+        <input class="field-input mb-2" id="loginPass" type="password" placeholder="Password">
+        <button class="btn-primary" onclick="handleLogin()">LOG IN</button>
+      </div>
+      <div id="registerForm" class="hidden">
+        <input class="field-input mb-2" id="regName" type="text" placeholder="Full Name">
+        <input class="field-input mb-2" id="regEmail" type="email" placeholder="Email Address">
+        <input class="field-input mb-2" id="regPhone" type="tel" placeholder="Phone Number">
+        <input class="field-input mb-2" id="regPass" type="password" placeholder="Password (6+ chars)">
+        <button class="btn-primary" onclick="handleRegister()">CREATE ACCOUNT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDE PANEL -->
+<aside class="side-panel" id="sidePanel" onclick="closeSidePanel(event)">
+  <div class="side-panel-inner">
+    <div class="side-head">
+      <div class="side-avatar" id="sideAvatar">U</div>
+      <div class="side-info"><strong id="sideName">User</strong><small id="sideEmail">user@example.com</small></div>
+      <button class="side-logout" onclick="doLogout()"><svg class="ic"><use href="#i-logout"/></svg></button>
+    </div>
+    <nav class="side-nav">
+      <a onclick="goSection('account');closeSidePanel()"><svg class="ic"><use href="#i-user"/></svg>My Account</a>
+      <a onclick="goSection('orders');closeSidePanel()"><svg class="ic"><use href="#i-bag"/></svg>My Orders</a>
+      <a onclick="goSection('addmoney');closeSidePanel()"><svg class="ic"><use href="#i-wallet"/></svg>Add Money</a>
+      <a onclick="goSection('promotion');closeSidePanel()"><svg class="ic"><use href="#i-gift"/></svg>Promotions</a>
+      <a onclick="goSection('codes');closeSidePanel()"><svg class="ic"><use href="#i-ticket"/></svg>My Codes</a>
+    </nav>
+  </div>
+</aside>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-overlay hidden" id="editProfileModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Edit Profile</h3><button class="modal-close" onclick="closeEditProfile()"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="modal-body">
+      <input class="field-input mb-2" id="editPic" placeholder="Profile Pic URL">
+      <input class="field-input mb-2" id="editName" placeholder="Full Name">
+      <input class="field-input mb-2" id="editPhone" type="tel" placeholder="Phone Number">
+      <button class="btn-primary" onclick="saveProfile()">SAVE CHANGES</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="script.js" defer></script>
 </body>
 </html>
